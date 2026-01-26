@@ -1,4 +1,4 @@
-# Afronix Tracker Backend
+# Flow By Afronix Backend
 
 A scalable, modular business tracking system API built with NestJS.
 
