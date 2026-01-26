@@ -27,6 +27,9 @@ export class User {
     @Column({ name: 'last_name', nullable: true })
     lastName: string;
 
+    @Column({ name: 'profile_image', nullable: true })
+    profileImage: string;
+
     @Column({ select: false, nullable: true }) // Nullable for OAuth users
     @Exclude()
     password: string;

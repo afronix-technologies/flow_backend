@@ -30,7 +30,8 @@ A scalable, modular business tracking system API built with NestJS.
 - **Production (Docker)**: `npm run docker:prod`
 - **Manual**: Run `npm run start:auth`, `npm run start:notification`, etc.
 
-- **git remote add flow https://github.com/afronix-technologies/flow_backend.git**
+### Push to Remote I named it flow_backend
+- **git remote add flow_backend https://github.com/afronix-technologies/flow_backend.git**
 
 ## 📚 Documentation
 Access the centralized API portal by opening `api-portal.html` in your browser, or visit services directly:
