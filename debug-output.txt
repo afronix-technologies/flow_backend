@@ -1,0 +1,10 @@
+✅ Connected to database
+
+--- ALL TABLES ---
+public.auth_invitations
+public.auth_roles
+public.auth_sessions
+public.auth_users
+public.migrations
+public.organizations
+public.user_organizations

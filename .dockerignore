@@ -1,0 +1,35 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build output
+dist
+coverage
+
+# Version Control
+.git
+.gitignore
+
+# Environment Variables (Security)
+.env
+.env.development
+.env.production
+.env.test
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.iml
+
+# Docker
+docker-compose.yml
+docker-compose.prod.yml
+Dockerfile
+Dockerfile.dev
+
+# Tools & Scripts
+scripts
+test
+.github

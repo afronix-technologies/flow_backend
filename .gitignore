@@ -1,0 +1,33 @@
+# compiled output
+/dist
+/node_modules
+
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+
+# tests
+/coverage
+/.nyc_output
+
+# IDEs
+/.idea
+/.vscode
+*.swp
+*.iml
+
+# environments
+.env
+.env.development
+.env.production
+.env.test
+
+# docker
+docker/postgres/data
