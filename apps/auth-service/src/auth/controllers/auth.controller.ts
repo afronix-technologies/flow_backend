@@ -1,11 +1,11 @@
-import { Controller, Post, Body, Query, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '../services/auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
-import { VerifyEmailDto } from '../dto/verify-email.dto';
+
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -13,7 +13,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // Limit to 5 attempts per minute
   @Post('register')
@@ -55,7 +55,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout user' })
-  async logout(@Req() req) {
+  async logout() {
     // Client side just drops token, server could invalidate refresh token
     return { message: 'Logged out successfully' };
   }

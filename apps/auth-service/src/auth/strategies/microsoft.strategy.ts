@@ -19,7 +19,7 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     accessToken: string,
     refreshToken: string,
     profile: any,
-    done: Function,
+    done: (error: any, user?: any) => void,
   ): Promise<any> {
     const { name, emails, id } = profile;
     const user = {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Role } from '../entities/role.entity';
@@ -13,7 +13,7 @@ export class RolesService implements OnModuleInit {
     @InjectRepository(Permission)
     private permissionRepository: Repository<Permission>,
     private permissionService: PermissionService,
-  ) {}
+  ) { }
 
   async onModuleInit() {
     await this.seedDefaultRoles();

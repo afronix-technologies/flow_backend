@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
-import { invitationTemplate } from './templates/invitation.template';
+
 import { verificationTemplate } from './templates/verification.template';
 import { passwordResetTemplate } from './templates/password-reset.template';
 import { welcomeTemplate } from './templates/welcome.template';

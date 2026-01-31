@@ -1,7 +1,6 @@
-import { IsArray, ValidateNested, IsEmail, IsNotEmpty, IsEnum, NotEquals } from 'class-validator';
+import { IsArray, ValidateNested, IsEmail, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '../enums/user-role.enum';
 
 export class InviteItemDto {
   @ApiProperty({ example: 'colleague@example.com' })

@@ -4,14 +4,12 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../entities/user.entity';
-import { UserRole } from '../enums/user-role.enum';
 import { Organization } from '../entities/organization.entity';
 import { UserOrganization } from '../entities/user-organization.entity';
 import { Invitation, InvitationStatus } from '../entities/invitation.entity';
@@ -47,7 +45,7 @@ export class AuthService {
     private emailService: EmailService,
     private rolesService: RolesService,
     private authGateway: AuthGateway,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
     // 1. Check if user exists (by email, we'll check globally for now or effectively unique per org, but usually unique email is better for UX,

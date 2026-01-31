@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -6,7 +6,6 @@ import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { User } from '../entities/user.entity';
-import { UserRole } from '../enums/user-role.enum';
 import { AuthService } from '../services/auth.service';
 import { InviteUserDto } from '../dto/invite-user.dto';
 import { BulkInviteDto } from '../dto/bulk-invite.dto';
@@ -15,7 +14,7 @@ import { AcceptInvitationDto } from '../dto/accept-invitation.dto';
 @ApiTags('Auth')
 @Controller('invitations')
 export class InvitationsController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)

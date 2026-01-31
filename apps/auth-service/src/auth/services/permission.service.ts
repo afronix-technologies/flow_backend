@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Permission } from '../entities/permission.entity';
@@ -8,7 +8,7 @@ export class PermissionService {
   constructor(
     @InjectRepository(Permission)
     private permissionRepository: Repository<Permission>,
-  ) {}
+  ) { }
 
   /**
    * Registers permissions for a module.
@@ -41,7 +41,7 @@ export class PermissionService {
 
     // Handle wildcard '*' permission
     if (codes.includes('*')) {
-      const allPermissions = await this.permissionRepository.find();
+      // allPermissions query removed as unused
       // We might want to handle '*' logically rather than fetching all,
       // but for DB linking we need actual entities.
       // Actually, '*' usually just means "bypass check" in Guard,

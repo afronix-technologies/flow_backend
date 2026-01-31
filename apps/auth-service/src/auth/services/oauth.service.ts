@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -9,7 +9,7 @@ import { RolesService } from './roles.service';
 import { AuthService } from './auth.service';
 import { OAuthProvider } from '../enums/oauth-provider.enum';
 import { AuthResponseDto } from '../dto/auth-response.dto';
-import { v4 as uuidv4 } from 'uuid';
+
 
 @Injectable()
 export class OAuthService {
@@ -24,14 +24,14 @@ export class OAuthService {
     private userOrganizationRepository: Repository<UserOrganization>,
     private rolesService: RolesService,
     private authService: AuthService,
-  ) {}
+  ) { }
 
   async handleOAuthLogin(userProfile: any, provider: OAuthProvider): Promise<AuthResponseDto> {
     if (!userProfile) {
       throw new UnauthorizedException('OAuth login failed');
     }
 
-    const { email, providerId, firstName, lastName, accessToken, refreshToken } = userProfile;
+    const { email, providerId, accessToken, refreshToken } = userProfile;
 
     // 1. Check if OAuth account exists
     const oauthAccount = await this.oauthAccountRepository.findOne({
@@ -83,7 +83,7 @@ export class OAuthService {
   }
 
   async createOAuthUser(profile: any, provider: OAuthProvider): Promise<AuthResponseDto> {
-    const { email, firstName, lastName, providerId, accessToken, refreshToken } = profile;
+    const { email, firstName, lastName } = profile;
 
     // Create Organization
     const organization = this.organizationRepository.create({
