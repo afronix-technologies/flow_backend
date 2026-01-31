@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AppController } from './app.controller';
 import { CronService } from './cron.service';
 
 @Module({
@@ -11,6 +12,7 @@ import { CronService } from './cron.service';
     }),
     ScheduleModule.forRoot(),
   ],
+  controllers: [AppController],
   providers: [CronService],
 })
-export class AppModule {}
+export class AppModule { }

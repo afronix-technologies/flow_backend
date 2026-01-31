@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
+import { AppController } from './app.controller';
 import { databaseConfig } from './core/config/database.config';
 
 @Module({
@@ -21,6 +22,7 @@ import { databaseConfig } from './core/config/database.config';
     ]),
     AuthModule,
   ],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,
@@ -28,4 +30,4 @@ import { databaseConfig } from './core/config/database.config';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
