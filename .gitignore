@@ -28,6 +28,8 @@ lerna-debug.log*
 .env.development
 .env.production
 .env.test
+.env.secrets
+.env.staging
 
 # docker
 docker/postgres/data

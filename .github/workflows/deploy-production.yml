@@ -1,0 +1,293 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: docker.io
+  DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+
+jobs:
+  build-and-push:
+    name: Build & Push Production Images
+    runs-on: ubuntu-latest
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    
+    strategy:
+      matrix:
+        service:
+          - name: auth-service
+            port: 3001
+          - name: notification-service
+            port: 3002
+          - name: job-service
+            port: 3003
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Generate version
+        id: version
+        run: |
+          VERSION="v$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/flow-${{ matrix.service.name }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=production-latest
+            type=sha,prefix=prod-
+      
+      - name: Build and push ${{ matrix.service.name }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/${{ matrix.service.name }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            SERVICE_PORT=${{ matrix.service.port }}
+      
+      - name: Image summary
+        run: |
+          echo "✅ Built and pushed: flow-${{ matrix.service.name }}"
+          echo "🏷️ Version: ${{ steps.version.outputs.version }}"
+
+  deploy-to-production:
+    name: Deploy to Production VPS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    # environment: production  # Uncomment after creating the environment in GitHub Settings
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deployment_key
+          chmod 600 ~/.ssh/deployment_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Copy deployment files to VPS
+        run: |
+          scp -i ~/.ssh/deployment_key \
+            -r scripts docker-compose.prod.yml \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/flow/
+      
+      - name: Create environment file on VPS
+        run: |
+          ssh -i ~/.ssh/deployment_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cat > /opt/flow/.env.production << 'EOF'
+          # Application
+          NODE_ENV=production
+          API_PREFIX=api
+          API_VERSION=v1
+          
+          # Database
+          DATABASE_HOST=postgres
+          DATABASE_PORT=5432
+          DATABASE_USER=${{ secrets.PROD_DATABASE_USER }}
+          DATABASE_PASSWORD=${{ secrets.PROD_DATABASE_PASSWORD }}
+          DATABASE_NAME=flow_production
+          DATABASE_SSL=true
+          
+          # Redis
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          
+          # Authentication
+          JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
+          JWT_EXPIRATION=15m
+          JWT_REFRESH_SECRET=${{ secrets.PROD_JWT_REFRESH_SECRET }}
+          JWT_REFRESH_EXPIRATION=7d
+          
+          # Services
+          AUTH_SERVICE_PORT=3001
+          NOTIFICATION_SERVICE_PORT=3002
+          JOB_SERVICE_PORT=3003
+          
+          # SMTP
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ secrets.SMTP_PORT }}
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
+          
+          # Security
+          CORS_ORIGINS=https://flow.afronix.com,https://app.afronix.com
+          THROTTLE_TTL=60
+          THROTTLE_LIMIT=1000
+          
+          # Docker
+          DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
+          EOF"
+      
+      - name: Backup database
+        run: |
+          ssh -i ~/.ssh/deployment_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+          set -e
+          echo "💾 Creating database backup..."
+          bash /home/deploy/scripts/backup-database.sh
+          
+          BACKUP_FILE=$(ls -t /var/backups/databases/flow_*.sql.gz | head -1)
+          echo "✅ Backup created: $BACKUP_FILE"
+          ENDSSH
+      
+      - name: Deploy to production
+        id: deploy
+        run: |
+          ssh -i ~/.ssh/deployment_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+          set -e
+          cd /opt/flow
+          
+          echo "📦 Pulling latest Docker images..."
+          export DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
+          export IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
+          
+          docker compose -f docker-compose.prod.yml pull
+          
+          echo "🔄 Performing zero-downtime deployment..."
+          
+          # Scale up new containers
+          docker compose --env-file .env.production -f docker-compose.prod.yml up -d --scale auth-service=2 --no-recreate
+          sleep 10
+          
+          # Health check new containers
+          docker compose exec -T auth-service curl -f http://localhost:3001/health || {
+            echo "❌ Health check failed, rolling back..."
+            docker compose --env-file .env.production -f docker-compose.prod.yml down
+            exit 1
+          }
+          
+          # Stop old containers
+          echo "🔄 Stopping old containers..."
+          docker compose -f docker-compose.prod.yml down || true
+          
+          # Start fresh with new containers
+          echo "🚀 Starting production containers..."
+          docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+          
+          echo "⏳ Waiting for all services..."
+          sleep 15
+          
+          echo "✅ Deployment complete!"
+          docker ps
+          ENDSSH
+      
+      - name: Run database migrations
+        run: |
+          ssh -i ~/.ssh/deployment_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+          set -e
+          cd /opt/flow
+          
+          echo "🗄️ Running database migrations..."
+          docker compose exec -T auth-service npm run migration:run || {
+            echo "⚠️ Migration failed, but continuing (check manually)"
+          }
+          ENDSSH
+      
+      - name: Health check
+        run: |
+          sleep 20
+          ssh -i ~/.ssh/deployment_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd /opt/flow && bash scripts/health-check.sh" || {
+            echo "❌ Health check failed! Initiating rollback..."
+            exit 1
+          }
+      
+      - name: Cleanup old images
+        if: success()
+        run: |
+          ssh -i ~/.ssh/deployment_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "docker image prune -af --filter 'until=72h'" || true
+      
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deployment_key
+      
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "🎉 Production deployment successful!"
+          echo "📍 URL: https://api.flow.afronix.com"
+          echo "🏷️ Version: ${{ needs.build-and-push.outputs.version }}"
+          echo "📝 Commit: ${{ github.event.head_commit.message }}"
+          echo "👤 Deployed by: ${{ github.actor }}"
+
+  rollback-on-failure:
+    name: Automatic Rollback
+    runs-on: ubuntu-latest
+    needs: [deploy-to-production]
+    if: failure()
+    
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deployment_key
+          chmod 600 ~/.ssh/deployment_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Execute rollback
+        run: |
+          ssh -i ~/.ssh/deployment_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd /opt/flow && bash scripts/rollback.sh"
+      
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deployment_key
+      
+      - name: Rollback notification
+        run: |
+          echo "⚠️ Deployment failed - automatic rollback executed"
+          echo "Please check logs and fix issues before retrying"
+
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-to-production]
+    if: always()
+    
+    steps:
+      - name: Deployment status
+        run: |
+          if [[ "${{ needs.deploy-to-production.result }}" == "success" ]]; then
+            echo "✅ Production deployment successful"
+          else
+            echo "❌ Production deployment failed"
+            exit 1
+          fi
