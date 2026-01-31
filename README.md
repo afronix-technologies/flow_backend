@@ -143,7 +143,7 @@ npm run docker:prod        # Run with Docker (production)
 
 ## 📄 License
 
-UNLICENSED - © 2024 Afronix Technologies
+UNLICENSED - © 2026 Afronix Technologies
 
 ## 🆘 Support
 
