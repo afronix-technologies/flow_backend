@@ -135,7 +135,7 @@ jobs:
           
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
-          IMAGE_TAG=staging-${{ github.sha }}
+          IMAGE_TAG=staging-latest
           EOF"
       
       - name: Deploy to staging
@@ -147,7 +147,7 @@ jobs:
           
           echo "📦 Pulling latest Docker images..."
           export DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
-          export IMAGE_TAG=staging-${{ github.sha }}
+          export IMAGE_TAG=staging-latest
           
           docker compose -f docker-compose.prod.yml pull
           
