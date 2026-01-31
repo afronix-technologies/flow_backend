@@ -5,7 +5,7 @@ The **Auth Service** is a dedicated microservice responsible for handling all au
 
 ## Core Functionality bling
 
-### 1. User Authentication
+### 1. User Authentication!
 - **Registration**: 
   - Allows new users to sign up.
   - Automatically creates a new **Organization** for the user (acting as the Owner).
