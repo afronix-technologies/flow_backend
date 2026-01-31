@@ -54,7 +54,7 @@ fi
 
 # Check Auth Service
 print_info "Checking Auth Service..."
-AUTH_RESPONSE=$(docker exec auth-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/health 2>/dev/null || echo "000")
+AUTH_RESPONSE=$(docker exec auth-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/v1/health 2>/dev/null || echo "000")
 if [ "$AUTH_RESPONSE" = "200" ]; then
     print_success "Auth Service is healthy (HTTP 200)"
 else
@@ -64,7 +64,7 @@ fi
 
 # Check Notification Service
 print_info "Checking Notification Service..."
-NOTIF_RESPONSE=$(docker exec notification-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/health 2>/dev/null || echo "000")
+NOTIF_RESPONSE=$(docker exec notification-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/api/v1/health 2>/dev/null || echo "000")
 if [ "$NOTIF_RESPONSE" = "200" ]; then
     print_success "Notification Service is healthy (HTTP 200)"
 else
@@ -74,7 +74,7 @@ fi
 
 # Check Job Service
 print_info "Checking Job Service..."
-JOB_RESPONSE=$(docker exec job-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/health 2>/dev/null || echo "000")
+JOB_RESPONSE=$(docker exec job-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/api/v1/health 2>/dev/null || echo "000")
 if [ "$JOB_RESPONSE" = "200" ]; then
     print_success "Job Service is healthy (HTTP 200)"
 else
