@@ -129,6 +129,17 @@ jobs:
           SMTP_PORT=${{ secrets.SMTP_PORT }}
           SMTP_USER=${{ secrets.SMTP_USER }}
           SMTP_PASS=${{ secrets.SMTP_PASS }}
+
+          # Google OAuth
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+
+          # Microsoft OAuth
+          MICROSOFT_CLIENT_ID=${{ secrets.MICROSOFT_CLIENT_ID }}
+          MICROSOFT_CLIENT_SECRET=${{ secrets.MICROSOFT_CLIENT_SECRET }}
+          MICROSOFT_CALLBACK_URL=${{ secrets.MICROSOFT_CALLBACK_URL }}
+          MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_TENANT_ID }}
           
           # CORS
           CORS_ORIGINS=https://api.staging.flow.afronix.com,http://localhost:3000
