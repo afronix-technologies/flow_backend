@@ -3,7 +3,7 @@
 ## Overview
 The **Auth Service** is a dedicated microservice responsible for handling all authentication and authorization aspects of the Afronix Tracker application. It manages users, organizations, subscriptions, and security tokens (JWT).
 
-## Core Functionality
+## Core Functionality bling
 
 ### 1. User Authentication
 - **Registration**: 
