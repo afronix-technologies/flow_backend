@@ -1,7 +1,7 @@
 import { masterLayout } from './master.layout';
 
 export const verificationTemplate = (url: string) => {
-    const content = `
+  const content = `
         <h2 style="color: #111827; margin-top: 0;">Welcome to Flow!</h2>
         <p>Thanks for joining <strong>AFORNIX</strong>.</p>
         <p>Please verify your email address by clicking the link below:</p>
@@ -10,5 +10,5 @@ export const verificationTemplate = (url: string) => {
         </div>
         <p style="font-size: 14px; color: #6b7280;">Link expires in 24 hours.</p>
     `;
-    return masterLayout(content);
+  return masterLayout(content);
 };

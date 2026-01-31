@@ -11,38 +11,44 @@ import { AuthService } from '../services/auth.service';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class UsersController {
-    constructor(
-        private usersService: UsersService,
-        private authService: AuthService
-    ) { }
+  constructor(
+    private usersService: UsersService,
+    private authService: AuthService,
+  ) {}
 
-    @Get('me')
-    @ApiOperation({ summary: 'Get current user profile' })
-    async getProfile(@CurrentUser() user: User) {
-        return this.usersService.findOne(user.id);
-    }
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  async getProfile(@CurrentUser() user: User) {
+    return this.usersService.findOne(user.id);
+  }
 
-    @Put('me')
-    @ApiOperation({ summary: 'Update user profile' })
-    async updateProfile(@CurrentUser() user: User, @Body() body: { firstName?: string, lastName?: string }) {
-        return this.usersService.update(user.id, body);
-    }
+  @Put('me')
+  @ApiOperation({ summary: 'Update user profile' })
+  async updateProfile(
+    @CurrentUser() user: User,
+    @Body() body: { firstName?: string; lastName?: string },
+  ) {
+    return this.usersService.update(user.id, body);
+  }
 
-    @Put('me/password')
-    @ApiOperation({ summary: 'Change password' })
-    async changePassword(@CurrentUser() user: User, @Body() body: { currentPassword: string, newPassword: string }) {
-        return this.usersService.changePassword(user.id, body.currentPassword, body.newPassword);
-    }
+  @Put('me/password')
+  @ApiOperation({ summary: 'Change password' })
+  async changePassword(
+    @CurrentUser() user: User,
+    @Body() body: { currentPassword: string; newPassword: string },
+  ) {
+    return this.usersService.changePassword(user.id, body.currentPassword, body.newPassword);
+  }
 
-    @Get('organizations')
-    @ApiOperation({ summary: 'List user organizations' })
-    async getOrganizations(@CurrentUser() user: User) {
-        return this.usersService.getOrganizations(user.id);
-    }
+  @Get('organizations')
+  @ApiOperation({ summary: 'List user organizations' })
+  async getOrganizations(@CurrentUser() user: User) {
+    return this.usersService.getOrganizations(user.id);
+  }
 
-    @Post('switch-organization')
-    @ApiOperation({ summary: 'Switch organization context' })
-    async switchOrganization(@CurrentUser() user: User, @Body() body: { organizationId: string }) {
-        return this.authService.switchOrganization(user.id, body.organizationId);
-    }
+  @Post('switch-organization')
+  @ApiOperation({ summary: 'Switch organization context' })
+  async switchOrganization(@CurrentUser() user: User, @Body() body: { organizationId: string }) {
+    return this.authService.switchOrganization(user.id, body.organizationId);
+  }
 }

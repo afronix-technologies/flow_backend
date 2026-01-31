@@ -1,7 +1,7 @@
 import { masterLayout } from './master.layout';
 
 export const invitationTemplate = (url: string, organizationName: string) => {
-    const content = `
+  const content = `
         <p style="margin-top: 0;">Hi!</p>
         <p>You've been added to <strong>${organizationName}</strong>'s team on Flow.</p>
         <p>Download the app to see your tasks and track your time:</p>
@@ -10,5 +10,5 @@ export const invitationTemplate = (url: string, organizationName: string) => {
         </div>
         <p style="font-size: 14px;">Or copy this link: <a href="${url}" style="color: #3b82f6;">${url}</a></p>
     `;
-    return masterLayout(content);
+  return masterLayout(content);
 };

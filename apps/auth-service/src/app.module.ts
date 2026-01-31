@@ -7,23 +7,25 @@ import { AuthModule } from './auth/auth.module';
 import { databaseConfig } from './core/config/database.config';
 
 @Module({
-    imports: [
-        ConfigModule.forRoot({
-            isGlobal: true,
-            envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
-        }),
-        TypeOrmModule.forRootAsync(databaseConfig),
-        ThrottlerModule.forRoot([{
-            ttl: 60000, // 60 seconds
-            limit: 10,  // 10 requests per TTL
-        }]),
-        AuthModule,
-    ],
-    providers: [
-        {
-            provide: APP_GUARD,
-            useClass: ThrottlerGuard,
-        },
-    ],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+    }),
+    TypeOrmModule.forRootAsync(databaseConfig),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 60 seconds
+        limit: 10, // 10 requests per TTL
+      },
+    ]),
+    AuthModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
-export class AppModule { }
+export class AppModule {}

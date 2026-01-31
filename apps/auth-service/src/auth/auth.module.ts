@@ -37,61 +37,61 @@ import { GoogleStrategy } from './strategies/google.strategy';
 import { MicrosoftStrategy } from './strategies/microsoft.strategy';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            User,
-            Organization,
-            UserOrganization,
-            Invitation,
-            Role,
-            Permission,
-            OAuthAccount,
-            Session
-        ]),
-        PassportModule,
-        ConfigModule,
-        JwtModule.registerAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: async (configService: ConfigService) => ({
-                secret: configService.get('JWT_SECRET'),
-                signOptions: {
-                    expiresIn: configService.get('JWT_EXPIRATION', '7d')
-                },
-            }),
-        }),
-    ],
-    controllers: [
-        AuthController,
-        UsersController,
-        InvitationsController,
-        OrganizationsController,
-        OAuthController
-    ],
-    providers: [
-        AuthService,
-        PasswordService,
-        EmailService,
-        UsersService,
-        RolesService,
-        PermissionService,
-        OAuthService,
-        JwtStrategy,
-        GoogleStrategy,
-        MicrosoftStrategy,
-        JwtAuthGuard,
-        RolesGuard,
-        PermissionsGuard,
-        AuthGateway
-    ],
-    exports: [
-        AuthService,
-        UsersService,
-        RolesService,
-        PermissionService,
-        JwtAuthGuard,
-        RolesGuard,
-        PermissionsGuard
-    ],
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      Organization,
+      UserOrganization,
+      Invitation,
+      Role,
+      Permission,
+      OAuthAccount,
+      Session,
+    ]),
+    PassportModule,
+    ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get('JWT_EXPIRATION', '7d'),
+        },
+      }),
+    }),
+  ],
+  controllers: [
+    AuthController,
+    UsersController,
+    InvitationsController,
+    OrganizationsController,
+    OAuthController,
+  ],
+  providers: [
+    AuthService,
+    PasswordService,
+    EmailService,
+    UsersService,
+    RolesService,
+    PermissionService,
+    OAuthService,
+    JwtStrategy,
+    GoogleStrategy,
+    MicrosoftStrategy,
+    JwtAuthGuard,
+    RolesGuard,
+    PermissionsGuard,
+    AuthGateway,
+  ],
+  exports: [
+    AuthService,
+    UsersService,
+    RolesService,
+    PermissionService,
+    JwtAuthGuard,
+    RolesGuard,
+    PermissionsGuard,
+  ],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -13,13 +13,16 @@ import { UpdateOrganizationDto } from '../dto/update-organization.dto';
 @Controller('organizations')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class OrganizationsController {
-    constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
-    @Put('current')
-    @Roles('admin')
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Update current organization details (Onboarding)' })
-    async updateCurrentOrganization(@CurrentUser() user: User, @Body() updateDto: UpdateOrganizationDto) {
-        return this.authService.updateOrganization(user.organizationId, updateDto);
-    }
+  @Put('current')
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update current organization details (Onboarding)' })
+  async updateCurrentOrganization(
+    @CurrentUser() user: User,
+    @Body() updateDto: UpdateOrganizationDto,
+  ) {
+    return this.authService.updateOrganization(user.organizationId, updateDto);
+  }
 }
