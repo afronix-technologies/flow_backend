@@ -120,7 +120,7 @@ npm run docker:prod        # Run with Docker (production)
 
 ## 🛡️ Security
 
-- JWT-based authentication!
+- JWT-based authentication
 - Rate limiting with Throttler
 - Helmet.js security headers
 - SSL/TLS encryption in production
