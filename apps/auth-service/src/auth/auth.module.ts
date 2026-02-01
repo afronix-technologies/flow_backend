@@ -96,4 +96,4 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
     PermissionsGuard,
   ],
 })
-export class AuthModule { }
+export class AuthModule {}

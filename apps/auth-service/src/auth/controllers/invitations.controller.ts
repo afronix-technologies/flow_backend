@@ -14,7 +14,7 @@ import { AcceptInvitationDto } from '../dto/accept-invitation.dto';
 @ApiTags('Auth')
 @Controller('invitations')
 export class InvitationsController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)

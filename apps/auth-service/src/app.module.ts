@@ -30,4 +30,4 @@ import { databaseConfig } from './core/config/database.config';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

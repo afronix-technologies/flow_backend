@@ -10,7 +10,6 @@ import { AuthService } from './auth.service';
 import { OAuthProvider } from '../enums/oauth-provider.enum';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 
-
 @Injectable()
 export class OAuthService {
   constructor(
@@ -24,7 +23,7 @@ export class OAuthService {
     private userOrganizationRepository: Repository<UserOrganization>,
     private rolesService: RolesService,
     private authService: AuthService,
-  ) { }
+  ) {}
 
   async handleOAuthLogin(userProfile: any, provider: OAuthProvider): Promise<AuthResponseDto> {
     if (!userProfile) {

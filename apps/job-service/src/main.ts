@@ -21,10 +21,10 @@ async function bootstrap() {
 
   SwaggerModule.setup('api/docs', app, document, {
     customSiteTitle: 'Flow Job API',
-    customCssUrl: '/api/docs/jobs/swagger-ui.css',
+    customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css',
     customJs: [
-      '/api/docs/jobs/swagger-ui-bundle.js',
-      '/api/docs/jobs/swagger-ui-standalone-preset.js',
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js',
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
     ],
   });
 

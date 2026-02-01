@@ -13,7 +13,7 @@ export class RolesService implements OnModuleInit {
     @InjectRepository(Permission)
     private permissionRepository: Repository<Permission>,
     private permissionService: PermissionService,
-  ) { }
+  ) {}
 
   async onModuleInit() {
     await this.seedDefaultRoles();

@@ -12,7 +12,7 @@ import { UpdateOrganizationDto } from '../dto/update-organization.dto';
 @Controller('organizations')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class OrganizationsController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @Put('current')
   @Roles('admin')

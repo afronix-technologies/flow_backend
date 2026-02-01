@@ -8,7 +8,7 @@ export class PermissionService {
   constructor(
     @InjectRepository(Permission)
     private permissionRepository: Repository<Permission>,
-  ) { }
+  ) {}
 
   /**
    * Registers permissions for a module.
@@ -49,7 +49,6 @@ export class PermissionService {
       // we might have a specific '*' permission entity or link all.
       // Let's assume there is a specific permission entity for '*' or we handle it in logic.
       // For now, let's just look for specific codes.
-
       // If '*' is passed, we check if there is a permission entity with code '*'
       // If not, maybe create it?
     }

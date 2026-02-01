@@ -15,4 +15,4 @@ import { CronService } from './cron.service';
   controllers: [AppController],
   providers: [CronService],
 })
-export class AppModule { }
+export class AppModule {}

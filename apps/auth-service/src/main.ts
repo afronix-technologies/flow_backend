@@ -44,10 +44,10 @@ async function bootstrap() {
     swaggerOptions: {
       persistAuthorization: true,
     },
-    customCssUrl: '/api/docs/swagger-ui.css',
+    customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css',
     customJs: [
-      '/api/docs/swagger-ui-bundle.js',
-      '/api/docs/swagger-ui-standalone-preset.js',
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js',
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
     ],
   });
 
