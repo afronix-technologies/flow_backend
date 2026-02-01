@@ -43,6 +43,7 @@ async function bootstrap() {
     customSiteTitle: 'Flow Auth API',
     swaggerOptions: {
       persistAuthorization: true,
+      url: '/api/docs-json',  // ← ADD THIS
     },
     customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css',
     customJs: [

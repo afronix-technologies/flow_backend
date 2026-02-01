@@ -21,6 +21,9 @@ async function bootstrap() {
 
   SwaggerModule.setup('api/docs', app, document, {
     customSiteTitle: 'Flow Notification API',
+    swaggerOptions: {
+      url: '/api/docs/notifications-json',  // ← ADD THIS
+    },
     customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css',
     customJs: [
       'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js',
