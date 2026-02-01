@@ -240,22 +240,26 @@ jobs:
           docker ps
           ENDSSH
       
-      - name: Setup SSL Certificate (first time only)
+      - name: Setup SSL Certificate
         continue-on-error: true
         run: |
-          ssh -i ~/.ssh/deployment_key \
+            ssh -i ~/.ssh/deployment_key \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
-          cd /opt/flow
-          
-          # Check if SSL already exists
-          if [ ! -d "nginx/ssl/live/api.flow.afronix.com" ]; then
+            cd /opt/flow
+            
+            # Check if real Let's Encrypt cert exists (not dummy)
+            if [ ! -f "nginx/ssl/live/api.flow.afronix.com/README" ]; then
             echo "🔒 Setting up SSL certificate..."
+            
+            # Remove any existing dummy certs
+            rm -rf nginx/ssl/live/api.flow.afronix.com
+            
             chmod +x scripts/setup-ssl.sh
             ./scripts/setup-ssl.sh api.flow.afronix.com admin@afronix.com .env.production
-          else
-            echo "✅ SSL certificate already exists"
-          fi
-          ENDSSH
+            else
+            echo "✅ Valid SSL certificate already exists"
+            fi
+            ENDSSH
       
       - name: Run database migrations
         run: |
