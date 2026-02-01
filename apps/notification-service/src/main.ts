@@ -19,7 +19,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  SwaggerModule.setup('api/docs', app, document, {
+  SwaggerModule.setup('api/docs/notifications', app, document, {
     customSiteTitle: 'Flow Notification API',
     swaggerOptions: {
       url: '/api/docs/notifications-json',  // ← ADD THIS

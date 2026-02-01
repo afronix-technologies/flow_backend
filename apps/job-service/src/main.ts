@@ -19,7 +19,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  SwaggerModule.setup('api/docs', app, document, {
+  SwaggerModule.setup('api/docs/jobs', app, document, {
     customSiteTitle: 'Flow Job API',
     swaggerOptions: {
       url: '/api/docs/jobs-json',  // ← ADD THIS
