@@ -192,7 +192,7 @@ jobs:
           if [ ! -d "nginx/ssl/live/api.staging.flow.afronix.com" ]; then
             echo "🔒 Setting up SSL certificate..."
             chmod +x scripts/setup-ssl.sh
-            ./scripts/setup-ssl.sh api.staging.flow.afronix.com admin@afronix.com
+            ./scripts/setup-ssl.sh api.staging.flow.afronix.com admin@afronix.com .env.staging
           else
             echo "✅ SSL certificate already exists"
           fi

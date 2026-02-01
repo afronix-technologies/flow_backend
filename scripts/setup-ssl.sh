@@ -9,15 +9,15 @@ set -e
 
 DOMAIN=$1
 EMAIL=$2
+ENV_FILE=$3
 
-if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
-    echo "Usage: $0 <domain> <email>"
-    echo "Example: $0 api.staging.flow.afronix.com admin@afronix.com"
+if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ] || [ -z "$ENV_FILE" ]; then
+    echo "Usage: $0 <domain> <email> <env_file>"
+    echo "Example: $0 api.staging.flow.afronix.com admin@afronix.com .env.staging"
     exit 1
 fi
 
 data_path="./nginx/ssl"
-rsa_key_size=4096
 
 if [ -d "$data_path/live/$DOMAIN" ]; then
     echo "✅ SSL certificates already exist for $DOMAIN"
@@ -41,13 +41,13 @@ openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
     -subj "/CN=localhost"
 
 echo "🚀 Starting Nginx..."
-docker compose -f docker-compose.prod.yml up --force-recreate -d nginx
+docker compose --env-file $ENV_FILE -f docker-compose.prod.yml up --force-recreate -d nginx
 
 echo "🗑️ Deleting dummy certificate..."
-docker compose -f docker-compose.prod.yml exec nginx rm -Rf /etc/nginx/ssl/live/$DOMAIN
+docker compose --env-file $ENV_FILE -f docker-compose.prod.yml exec nginx rm -Rf /etc/nginx/ssl/live/$DOMAIN
 
 echo "📝 Requesting Let's Encrypt certificate for $DOMAIN..."
-docker compose -f docker-compose.prod.yml run --rm --entrypoint "\
+docker compose --env-file $ENV_FILE -f docker-compose.prod.yml run --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     --email $EMAIL \
     --agree-tos \
@@ -56,6 +56,6 @@ docker compose -f docker-compose.prod.yml run --rm --entrypoint "\
     -d $DOMAIN" certbot
 
 echo "🔄 Reloading Nginx..."
-docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
+docker compose --env-file $ENV_FILE -f docker-compose.prod.yml exec nginx nginx -s reload
 
 echo "✅ SSL setup completed successfully!"
