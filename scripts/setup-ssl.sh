@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #############################################
-# SSL Certificate Setup Script
-# Obtains SSL certificates using Certbot
+# SSL Certificate Initialization Script
+# Bootstraps SSL with dummy certs -> Certbot
 #############################################
 
 set -e
@@ -16,26 +16,46 @@ if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
     exit 1
 fi
 
-echo "🔒 Setting up SSL certificate for $DOMAIN"
+data_path="./nginx/ssl"
+rsa_key_size=4096
 
-# Check if certificate already exists
-if [ -d "/etc/letsencrypt/live/$DOMAIN" ]; then
-    echo "✅ Certificate already exists for $DOMAIN"
-    echo "🔄 Renewing certificate..."
-    docker compose run --rm certbot renew
-else
-    echo "📝 Obtaining new certificate for $DOMAIN..."
-    docker compose run --rm certbot certonly \
-        --webroot \
-        --webroot-path=/var/www/certbot \
-        --email $EMAIL \
-        --agree-tos \
-        --no-eff-email \
-        -d $DOMAIN
+if [ -d "$data_path/live/$DOMAIN" ]; then
+    echo "✅ SSL certificates already exist for $DOMAIN"
+    exit 0
 fi
 
-echo "✅ SSL certificate setup complete!"
-echo "🔄 Reloading Nginx..."
-docker compose exec nginx nginx -s reload
+echo "🔒 Initializing SSL for $DOMAIN..."
 
-echo "✅ Done! Your site is now secured with HTTPS"
+if [ ! -e "$data_path/options-ssl-nginx.conf" ] || [ ! -e "$data_path/ssl-dhparams.pem" ]; then
+    echo "📥 Downloading recommended TLS parameters..."
+    mkdir -p "$data_path"
+    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/options-ssl-nginx.conf"
+    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/ssl-dhparams.pem"
+fi
+
+echo "🔑 Creating dummy certificate for $DOMAIN path $data_path/live/$DOMAIN"
+mkdir -p "$data_path/live/$DOMAIN"
+openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+    -keyout "$data_path/live/$DOMAIN/privkey.pem" \
+    -out "$data_path/live/$DOMAIN/fullchain.pem" \
+    -subj "/CN=localhost"
+
+echo "🚀 Starting Nginx..."
+docker compose -f docker-compose.prod.yml up --force-recreate -d nginx
+
+echo "🗑️ Deleting dummy certificate..."
+docker compose -f docker-compose.prod.yml exec nginx rm -Rf /etc/nginx/ssl/live/$DOMAIN
+
+echo "📝 Requesting Let's Encrypt certificate for $DOMAIN..."
+docker compose -f docker-compose.prod.yml run --rm --entrypoint "\
+  certbot certonly --webroot -w /var/www/certbot \
+    --email $EMAIL \
+    --agree-tos \
+    --no-eff-email \
+    --force-renewal \
+    -d $DOMAIN" certbot
+
+echo "🔄 Reloading Nginx..."
+docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
+
+echo "✅ SSL setup completed successfully!"
