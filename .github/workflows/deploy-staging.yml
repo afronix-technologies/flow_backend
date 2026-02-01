@@ -166,6 +166,15 @@ jobs:
           export DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
           export IMAGE_TAG=staging-latest
           
+          echo "🛑 Freeing up ports..."
+          # specific check for ubuntu/debian services
+          if command -v systemctl &> /dev/null; then
+            sudo systemctl stop nginx || true
+            sudo systemctl disable nginx || true
+            sudo systemctl stop apache2 || true
+            sudo systemctl disable apache2 || true
+          fi
+          
           docker compose -f docker-compose.prod.yml pull
           
           echo "🔄 Stopping old containers..."

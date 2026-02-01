@@ -191,6 +191,14 @@ jobs:
           export DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
           export IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
           
+          echo "🛑 Freeing up ports..."
+          if command -v systemctl &> /dev/null; then
+            sudo systemctl stop nginx || true
+            sudo systemctl disable nginx || true
+            sudo systemctl stop apache2 || true
+            sudo systemctl disable apache2 || true
+          fi
+          
           docker compose -f docker-compose.prod.yml pull
           
           echo "🔄 Performing zero-downtime deployment..."
