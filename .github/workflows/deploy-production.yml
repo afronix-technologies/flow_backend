@@ -159,6 +159,9 @@ jobs:
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
           IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
+
+          # Nginx
+          DOMAIN=api.flow.afronix.com
           EOF
           
           # Create Nginx environment file
