@@ -33,3 +33,10 @@ lerna-debug.log*
 
 # docker
 docker/postgres/data
+
+# nginx ssl certificates
+nginx/ssl/*
+!nginx/ssl/.gitkeep
+
+# certbot data
+certbot-data/

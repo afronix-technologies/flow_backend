@@ -98,7 +98,7 @@ jobs:
       - name: Copy deployment files to VPS
         run: |
           scp -i ~/.ssh/deployment_key \
-            -r scripts docker-compose.prod.yml \
+            -r scripts nginx docker-compose.prod.yml \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/flow/
       
       - name: Create environment file on VPS
@@ -213,6 +213,23 @@ jobs:
           
           echo "✅ Deployment complete!"
           docker ps
+          ENDSSH
+      
+      - name: Setup SSL Certificate (first time only)
+        continue-on-error: true
+        run: |
+          ssh -i ~/.ssh/deployment_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+          cd /opt/flow
+          
+          # Check if SSL already exists
+          if [ ! -d "nginx/ssl/live/api.flow.afronix.com" ]; then
+            echo "🔒 Setting up SSL certificate..."
+            chmod +x scripts/setup-ssl.sh
+            ./scripts/setup-ssl.sh api.flow.afronix.com admin@afronix.com
+          else
+            echo "✅ SSL certificate already exists"
+          fi
           ENDSSH
       
       - name: Run database migrations

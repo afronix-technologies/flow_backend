@@ -193,6 +193,55 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: flow-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/templates/nginx.conf.template:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot-data:/var/www/certbot:ro
+    environment:
+      - DOMAIN=${DOMAIN}
+    env_file:
+      - ./nginx/.env.${NODE_ENV:-production}
+    depends_on:
+      - auth-service
+      - notification-service
+      - job-service
+    networks:
+      - afronix-network
+    healthcheck:
+      test: [ "CMD", "nginx", "-t" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Certbot for SSL Certificate Management
+  certbot:
+    image: certbot/certbot
+    container_name: flow-certbot
+    volumes:
+      - ./nginx/ssl:/etc/letsencrypt
+      - certbot-data:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - afronix-network
+
 networks:
   afronix-network:
     driver: bridge
@@ -201,4 +250,6 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  certbot-data:
     driver: local
