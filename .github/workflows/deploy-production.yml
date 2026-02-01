@@ -192,17 +192,35 @@ jobs:
           export IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
           
           echo "🛑 Freeing up ports..."
+
+          # Stop system services first
           if command -v systemctl &> /dev/null; then
             sudo systemctl stop nginx || true
             sudo systemctl disable nginx || true
             sudo systemctl stop apache2 || true
             sudo systemctl disable apache2 || true
           fi
-          
-          # Aggressive kill for any process holding ports 80 or 443
-          echo "☠️ Force killing any process on port 80/443..."
-          sudo fuser -k 80/tcp || true
-          sudo fuser -k 443/tcp || true
+
+          # Stop ALL Docker containers that might be using ports
+          echo "🐳 Stopping all Docker containers..."
+          docker stop $(docker ps -q) 2>/dev/null || true
+
+          # Kill processes on ports
+          echo "☠️ Force killing processes on ports 80/443..."
+          sudo fuser -k 80/tcp 2>/dev/null || true
+          sudo fuser -k 443/tcp 2>/dev/null || true
+
+          # Wait for ports to be released
+          sleep 3
+
+          # Verify ports are free
+          if sudo lsof -i :80 -i :443 | grep LISTEN; then
+            echo "❌ ERROR: Ports still in use!"
+            sudo lsof -i :80 -i :443
+            exit 1
+          fi
+
+          echo "✅ Ports 80 and 443 are now free"
           
           docker compose -f docker-compose.prod.yml pull
           
