@@ -170,12 +170,12 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
           set -e
           cd /opt/flow
-                echo "💾 Creating database backup..."
-                bash scripts/backup-database.sh
-                
-                BACKUP_FILE=$(ls -t /var/backups/databases/flow_*.sql.gz | head -1)
-                echo "✅ Backup created: $BACKUP_FILE"
-                ENDSSH
+          echo "💾 Creating database backup..."
+          bash scripts/backup-database.sh
+          
+          BACKUP_FILE=$(ls -t /var/backups/databases/flow_*.sql.gz | head -1)
+          echo "✅ Backup created: $BACKUP_FILE"
+          ENDSSH
       
       - name: Deploy to production
         id: deploy  
