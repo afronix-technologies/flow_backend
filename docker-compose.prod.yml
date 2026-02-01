@@ -206,8 +206,6 @@ services:
     environment:
       - DOMAIN=${DOMAIN}
       - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
-    env_file:
-      - ./nginx/.env.${NODE_ENV:-production}
     depends_on:
       - auth-service
       - notification-service
