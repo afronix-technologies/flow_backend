@@ -149,7 +149,7 @@ jobs:
           IMAGE_TAG=staging-latest
 
           # Nginx
-DOMAIN=api.staging.flow.afronix.com
+          DOMAIN=api.staging.flow.afronix.com
           EOF
           
           # Create Nginx environment file
