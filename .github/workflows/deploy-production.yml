@@ -159,14 +159,8 @@ jobs:
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
           IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
-
-          # Nginx
-          DOMAIN=api.flow.afronix.com
-          EOF
           
-          # Create Nginx environment file
-          mkdir -p /opt/flow/nginx
-          cat > /opt/flow/nginx/.env.production << 'EOF'
+          # Nginx
           DOMAIN=api.flow.afronix.com
           EOF"
       
@@ -243,23 +237,47 @@ jobs:
       - name: Setup SSL Certificate
         continue-on-error: true
         run: |
-            ssh -i ~/.ssh/deployment_key \
+          ssh -i ~/.ssh/deployment_key \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
-            cd /opt/flow
-            
-            # Check if real Let's Encrypt cert exists (not dummy)
-            if [ ! -f "nginx/ssl/live/api.flow.afronix.com/README" ]; then
-            echo "🔒 Setting up SSL certificate..."
-            
-            # Remove any existing dummy certs
-            rm -rf nginx/ssl/live/api.flow.afronix.com
-            
-            chmod +x scripts/setup-ssl.sh
-            ./scripts/setup-ssl.sh api.flow.afronix.com admin@afronix.com .env.production
-            else
+          cd /opt/flow
+          
+          # Check if valid SSL cert exists
+          if [ -f "nginx/ssl/live/api.flow.afronix.com/README" ]; then
             echo "✅ Valid SSL certificate already exists"
-            fi
-            ENDSSH
+            exit 0
+          fi
+          
+          echo "🔒 Setting up SSL certificate..."
+          
+          # Create dummy cert if none exists
+          if [ ! -d "nginx/ssl/live/api.flow.afronix.com" ]; then
+            mkdir -p nginx/ssl/live/api.flow.afronix.com
+            openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+              -keyout nginx/ssl/live/api.flow.afronix.com/privkey.pem \
+              -out nginx/ssl/live/api.flow.afronix.com/fullchain.pem \
+              -subj "/CN=localhost"
+          fi
+          
+          # Start nginx with dummy cert
+          docker compose --env-file .env.production -f docker-compose.prod.yml restart nginx
+          sleep 5
+          
+          # Get real certificate
+          docker compose --env-file .env.production -f docker-compose.prod.yml run --rm --entrypoint "\
+            certbot certonly --webroot -w /var/www/certbot \
+              --email admin@afronix.com \
+              --agree-tos \
+              --no-eff-email \
+              --force-renewal \
+              -d api.flow.afronix.com" certbot || {
+            echo "⚠️ SSL setup failed, but continuing with self-signed cert"
+            exit 0
+          }
+          
+          # Reload nginx with real cert
+          docker compose --env-file .env.production -f docker-compose.prod.yml restart nginx
+          echo "✅ SSL certificate installed"
+          ENDSSH
       
       - name: Run database migrations
         run: |
