@@ -29,7 +29,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('api/docs/auth', app, document);
 
   // Default port for Auth Service
   const port = process.env.AUTH_SERVICE_PORT || 3001;

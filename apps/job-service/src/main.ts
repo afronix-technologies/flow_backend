@@ -12,7 +12,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('api/docs/jobs', app, document);
 
   // Job service might not need a port exposed if it only processes jobs/cron,
   // but for health checks or manual triggers, it's good.
