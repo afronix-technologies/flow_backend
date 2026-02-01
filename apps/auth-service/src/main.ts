@@ -7,31 +7,45 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Security Hardening
-  app.enableCors(); // Enable CORS with default settings (can be strictured later)
-  app.setGlobalPrefix('api/v1'); // Set global prefix
-  app.use(helmet()); // Set security headers
+  // Security - Modified for Swagger
+  app.enableCors({
+    origin: process.env.CORS_ORIGINS?.split(',') || '*',
+  });
 
-  // Global Validation
+  app.setGlobalPrefix('api/v1');
+
+  // Use helmet with CSP relaxed for Swagger
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Disable CSP for Swagger to work
+    }),
+  );
+
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Strip properties not in DTO
-      transform: true, // Transform payloads to DTO instances
-      forbidNonWhitelisted: true, // Throw error if extra properties present
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
     }),
   );
 
   // Swagger Configuration
   const config = new DocumentBuilder()
-    .setTitle('Auth Service API')
+    .setTitle('Flow Auth Service API')
     .setDescription('Authentication and User Management API')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs/auth', app, document);
 
-  // Default port for Auth Service
+  const document = SwaggerModule.createDocument(app, config);
+
+  SwaggerModule.setup('api/docs', app, document, {
+    customSiteTitle: 'Flow Auth API',
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
+
   const port = process.env.AUTH_SERVICE_PORT || 3001;
   await app.listen(port);
   console.log(`Auth Service is running on port ${port}`);

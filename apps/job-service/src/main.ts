@@ -4,18 +4,25 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: process.env.CORS_ORIGINS?.split(',') || '*',
+  });
+
   app.setGlobalPrefix('api/v1');
-  // Swagger Configuration
+
   const config = new DocumentBuilder()
-    .setTitle('Job Service API')
+    .setTitle('Flow Job Service API')
     .setDescription('Background Jobs and Cron API')
     .setVersion('1.0')
     .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs/jobs', app, document);
 
-  // Job service might not need a port exposed if it only processes jobs/cron,
-  // but for health checks or manual triggers, it's good.
+  const document = SwaggerModule.createDocument(app, config);
+
+  SwaggerModule.setup('api/docs', app, document, {
+    customSiteTitle: 'Flow Job API',
+  });
+
   const port = process.env.JOB_SERVICE_PORT || 3003;
   await app.listen(port);
   console.log(`Job Service is running on port ${port}`);
