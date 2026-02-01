@@ -21,6 +21,11 @@ async function bootstrap() {
 
   SwaggerModule.setup('api/docs', app, document, {
     customSiteTitle: 'Flow Notification API',
+    customCssUrl: '/api/docs/notifications/swagger-ui.css',
+    customJs: [
+      '/api/docs/notifications/swagger-ui-bundle.js',
+      '/api/docs/notifications/swagger-ui-standalone-preset.js',
+    ],
   });
 
   const port = process.env.NOTIFICATION_SERVICE_PORT || 3002;

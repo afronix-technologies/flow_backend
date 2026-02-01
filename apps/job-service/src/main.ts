@@ -21,6 +21,11 @@ async function bootstrap() {
 
   SwaggerModule.setup('api/docs', app, document, {
     customSiteTitle: 'Flow Job API',
+    customCssUrl: '/api/docs/jobs/swagger-ui.css',
+    customJs: [
+      '/api/docs/jobs/swagger-ui-bundle.js',
+      '/api/docs/jobs/swagger-ui-standalone-preset.js',
+    ],
   });
 
   const port = process.env.JOB_SERVICE_PORT || 3003;

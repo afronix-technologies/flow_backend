@@ -44,6 +44,11 @@ async function bootstrap() {
     swaggerOptions: {
       persistAuthorization: true,
     },
+    customCssUrl: '/api/docs/swagger-ui.css',
+    customJs: [
+      '/api/docs/swagger-ui-bundle.js',
+      '/api/docs/swagger-ui-standalone-preset.js',
+    ],
   });
 
   const port = process.env.AUTH_SERVICE_PORT || 3001;
