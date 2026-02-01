@@ -159,6 +159,12 @@ jobs:
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
           IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
+          EOF
+          
+          # Create Nginx environment file
+          mkdir -p /opt/flow/nginx
+          cat > /opt/flow/nginx/.env.production << 'EOF'
+          DOMAIN=api.flow.afronix.com
           EOF"
       
       - name: Backup database

@@ -147,6 +147,12 @@ jobs:
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
           IMAGE_TAG=staging-latest
+          EOF
+          
+          # Create Nginx environment file
+          mkdir -p /opt/flow-staging/nginx
+          cat > /opt/flow-staging/nginx/.env.staging << 'EOF'
+          DOMAIN=api.staging.flow.afronix.com
           EOF"
       
       - name: Deploy to staging
