@@ -142,7 +142,7 @@ jobs:
           MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_TENANT_ID }}
           
           # CORS
-          CORS_ORIGINS=https://api.staging.flow.afronix.com,http://localhost:3000
+          CORS_ORIGINS=https://api.staging.flow.afronix.com,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003
           
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
