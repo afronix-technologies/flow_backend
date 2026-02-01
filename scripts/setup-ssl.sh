@@ -1,10 +1,8 @@
 #!/bin/bash
-
 #############################################
 # SSL Certificate Initialization Script
 # Bootstraps SSL with dummy certs -> Certbot
 #############################################
-
 set -e
 
 DOMAIN=$1
@@ -33,7 +31,7 @@ if [ ! -e "$data_path/options-ssl-nginx.conf" ] || [ ! -e "$data_path/ssl-dhpara
     curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/ssl-dhparams.pem"
 fi
 
-echo "🔑 Creating dummy certificate for $DOMAIN path $data_path/live/$DOMAIN"
+echo "🔑 Creating dummy certificate for $DOMAIN"
 mkdir -p "$data_path/live/$DOMAIN"
 openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
     -keyout "$data_path/live/$DOMAIN/privkey.pem" \
@@ -43,8 +41,8 @@ openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
 echo "🚀 Starting Nginx..."
 docker compose --env-file $ENV_FILE -f docker-compose.prod.yml up --force-recreate -d nginx
 
-echo "🗑️ Deleting dummy certificate..."
-docker compose --env-file $ENV_FILE -f docker-compose.prod.yml exec nginx rm -Rf /etc/nginx/ssl/live/$DOMAIN
+echo "🗑️ Deleting dummy certificate from host..."
+rm -rf "$data_path/live/$DOMAIN"
 
 echo "📝 Requesting Let's Encrypt certificate for $DOMAIN..."
 docker compose --env-file $ENV_FILE -f docker-compose.prod.yml run --rm --entrypoint "\
