@@ -8,6 +8,7 @@ import { AuthController } from './controllers/auth.controller';
 import { UsersController } from './controllers/users.controller';
 import { InvitationsController } from './controllers/invitations.controller';
 import { OrganizationsController } from './controllers/organizations.controller';
+import { TestVerificationController } from './controllers/test-verification.controller';
 
 import { AuthService } from './services/auth.service';
 import { PasswordService } from './services/password.service';
@@ -67,6 +68,7 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
     InvitationsController,
     OrganizationsController,
     OAuthController,
+    TestVerificationController,
   ],
   providers: [
     AuthService,
@@ -94,4 +96,4 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
     PermissionsGuard,
   ],
 })
-export class AuthModule {}
+export class AuthModule { }
