@@ -26,6 +26,12 @@ export class Organization {
   @Column()
   name: string;
 
+  @Column({ unique: true })
+  slug: string;
+
+  @Column({ nullable: true, unique: true })
+  domain: string;
+
   @Column({ nullable: true })
   industry: string;
 

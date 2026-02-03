@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Query, UseGuards, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '../services/auth.service';
@@ -27,16 +28,67 @@ export class AuthController {
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify email with token' })
   @ApiResponse({ status: 200, type: AuthResponseDto })
-  async verifyEmail(@Query('token') token: string) {
-    return this.authService.verifyEmail(token);
+  async verifyEmail(@Query('token') token: string, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.verifyEmail(token);
+
+    if (result.sessionId) {
+      res.cookie('session_token', result.sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        domain: process.env.DOMAIN ? `.${process.env.DOMAIN}` : undefined,
+      });
+    }
+
+    if (result.refreshToken) {
+      res.cookie('refresh_token', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/auth/refresh',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+    }
+
+    return result;
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // Limit to 5 attempts per minute
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, type: AuthResponseDto })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.login(loginDto);
+
+    if ('organizations' in result) {
+      return result; // Multi-org selection needed
+    }
+
+    // Set Cookies
+    if (result.sessionId) {
+      res.cookie('session_token', result.sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        domain: process.env.DOMAIN ? `.${process.env.DOMAIN}` : undefined,
+      });
+    }
+
+    if (result.refreshToken) {
+      res.cookie('refresh_token', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/auth/refresh', // Scope to refresh endpoint
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+    }
+
+    return result;
   }
 
   @Post('forgot-password')

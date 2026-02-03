@@ -3,9 +3,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(cookieParser());
 
   // Security - Modified for Swagger
   app.enableCors({
@@ -43,7 +46,7 @@ async function bootstrap() {
     customSiteTitle: 'Flow Auth API',
     swaggerOptions: {
       persistAuthorization: true,
-      url: '/api/docs-json',  // ← ADD THIS
+      url: '/api/docs-json', // ← ADD THIS
     },
     customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css',
     customJs: [

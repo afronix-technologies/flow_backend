@@ -8,8 +8,10 @@ export const redisConfig: CacheModuleAsyncOptions = {
   inject: [ConfigService],
   useFactory: async (configService: ConfigService) => ({
     store: redisStore,
-    host: configService.get<string>('REDIS_HOST'),
-    port: configService.get<number>('REDIS_PORT'),
+    socket: {
+      host: configService.get<string>('REDIS_HOST'),
+      port: configService.get<number>('REDIS_PORT'),
+    },
     ttl: configService.get<number>('REDIS_TTL'),
     max: configService.get<number>('REDIS_MAX_ITEMS'),
   }),

@@ -37,7 +37,9 @@ services:
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - DATABASE_NAME=${DATABASE_NAME}
       - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - DOMAIN=${DOMAIN}
       - NOTIFICATION_SERVICE_URL=http://notification-service:3002
       # OAuth Config
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}

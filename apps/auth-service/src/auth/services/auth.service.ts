@@ -28,6 +28,9 @@ import { RolesService } from './roles.service';
 import { AuthGateway } from '../gateways/auth.gateway';
 import { v4 as uuidv4 } from 'uuid';
 
+import { RefreshToken } from '../entities/refresh-token.entity';
+import { SessionService } from './session.service';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -39,12 +42,15 @@ export class AuthService {
     private userOrganizationRepository: Repository<UserOrganization>,
     @InjectRepository(Invitation)
     private invitationRepository: Repository<Invitation>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: Repository<RefreshToken>,
     private passwordService: PasswordService,
     private jwtService: JwtService,
     private configService: ConfigService,
     private emailService: EmailService,
     private rolesService: RolesService,
     private authGateway: AuthGateway,
+    private sessionService: SessionService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
@@ -80,6 +86,7 @@ export class AuthService {
     // Transactional would be better
     const organization = this.organizationRepository.create({
       name: registerDto.organizationName,
+      slug: registerDto.slug, // Add slug
       teamSize: 1,
     });
     const savedOrg = await this.organizationRepository.save(organization);
@@ -130,9 +137,28 @@ export class AuthService {
 
     user.emailVerified = true;
     user.emailVerificationToken = null;
+    user.lastLogin = new Date(); // Update last login
     await this.userRepository.save(user);
 
-    return this.generateAuthResponse(user, user.organization);
+    // Auto-login: Create Session
+    const sessionId = await this.sessionService.createSession(user);
+
+    // Auto-login: Create Refresh Token
+    const refreshToken = uuidv4();
+    await this.refreshTokenRepository.save({
+      userId: user.id,
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      ipAddress: '127.0.0.1',
+      userAgent: 'Verification Flow',
+    });
+
+    return {
+      sessionId,
+      refreshToken,
+      user: this.generateAuthResponse(user, user.organization).user,
+      organization: this.generateAuthResponse(user, user.organization).organization,
+    };
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto | { organizations: Organization[] }> {
@@ -182,7 +208,31 @@ export class AuthService {
     userToLogin.lastLogin = new Date();
     await this.userRepository.save(userToLogin);
 
-    return this.generateAuthResponse(userToLogin, userToLogin.organization);
+    if (!userToLogin.organization) {
+      throw new UnauthorizedException(
+        'No organization assigned to this account. Please contact support.',
+      );
+    }
+
+    // Create Redis Session
+    const sessionId = await this.sessionService.createSession(userToLogin);
+
+    // Create Refresh Token (Long Lived)
+    const refreshToken = uuidv4();
+    await this.refreshTokenRepository.save({
+      userId: userToLogin.id,
+      token: refreshToken, // Should hash this in production
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      ipAddress: '127.0.0.1', // Todo: Extract from request
+      userAgent: 'Unknown', // Todo: Extract from request
+    });
+
+    return {
+      sessionId,
+      refreshToken,
+      user: this.generateAuthResponse(userToLogin, userToLogin.organization).user,
+      organization: this.generateAuthResponse(userToLogin, userToLogin.organization).organization, // Default org context
+    };
   }
 
   async validateUser(userId: string): Promise<User> {
@@ -556,6 +606,7 @@ export class AuthService {
       organization: {
         id: organization.id,
         name: organization.name,
+        slug: organization.slug,
         onboardingStep: organization.onboardingStep,
       },
     };

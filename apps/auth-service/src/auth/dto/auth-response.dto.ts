@@ -25,15 +25,21 @@ class OrganizationResponse {
   name: string;
 
   @ApiProperty()
+  slug: string;
+
+  @ApiProperty()
   onboardingStep: string;
 }
 
 export class AuthResponseDto {
-  @ApiProperty()
-  accessToken: string;
+  @ApiProperty({ required: false })
+  accessToken?: string; // Optional if we move to cookie-only
 
-  @ApiProperty()
-  refreshToken: string;
+  @ApiProperty({ required: false })
+  refreshToken?: string;
+
+  @ApiProperty({ required: false })
+  sessionId?: string;
 
   @ApiProperty({ type: UserResponse })
   user: UserResponse;
