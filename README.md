@@ -31,7 +31,7 @@ main (production) ← PR with approval ← develop (staging) ← feature/* branc
 - Docker & Docker Compose
 - PostgreSQL (External or Local)
 
-### Local Development
+### Local Development!
 
 ```bash
 # 1. Clone the repository
