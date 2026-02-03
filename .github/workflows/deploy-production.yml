@@ -152,7 +152,7 @@ jobs:
           MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_TENANT_ID }}
           
           # Security - Updated for wildcard subdomains
-          CORS_ORIGINS=https://*.flow.afronix.com,https://flow.afronix.com,https://app.afronix.com
+          CORS_ORIGINS=https://*.flow.afronix.com,https://flow.afronix.com,https://app.afronix.com,https://flowwithafronix.vercel.app
           THROTTLE_TTL=60
           THROTTLE_LIMIT=1000
           

@@ -51,7 +51,7 @@ export class AuthService {
     private rolesService: RolesService,
     private authGateway: AuthGateway,
     private sessionService: SessionService,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
     // 1. Check if user exists (by email, we'll check globally for now or effectively unique per org, but usually unique email is better for UX,
@@ -153,11 +153,14 @@ export class AuthService {
       userAgent: 'Verification Flow',
     });
 
+    const authResponse = this.generateAuthResponse(user, user.organization);
+
     return {
       sessionId,
       refreshToken,
-      user: this.generateAuthResponse(user, user.organization).user,
-      organization: this.generateAuthResponse(user, user.organization).organization,
+      accessToken: authResponse.accessToken, // Include access token
+      user: authResponse.user,
+      organization: authResponse.organization,
     };
   }
 
@@ -227,11 +230,14 @@ export class AuthService {
       userAgent: 'Unknown', // Todo: Extract from request
     });
 
+    const authResponse = this.generateAuthResponse(userToLogin, userToLogin.organization);
+
     return {
       sessionId,
       refreshToken,
-      user: this.generateAuthResponse(userToLogin, userToLogin.organization).user,
-      organization: this.generateAuthResponse(userToLogin, userToLogin.organization).organization, // Default org context
+      accessToken: authResponse.accessToken, // Include access token
+      user: authResponse.user,
+      organization: authResponse.organization, // Default org context
     };
   }
 

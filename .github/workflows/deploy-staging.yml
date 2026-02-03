@@ -142,7 +142,7 @@ jobs:
           MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_TENANT_ID }}
           
           # CORS - Updated for wildcard subdomains
-          CORS_ORIGINS=https://*.staging.flow.afronix.com,https://staging.flow.afronix.com,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:4200,http://localhost:4201
+          CORS_ORIGINS=https://*.staging.flow.afronix.com,https://staging.flow.afronix.com,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:4200,http://localhost:4201,https://flowwithafronix.vercel.app
           
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
