@@ -26,7 +26,7 @@ export class Organization {
   @Column()
   name: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: true })
   slug: string;
 
   @Column({ nullable: true, unique: true })
