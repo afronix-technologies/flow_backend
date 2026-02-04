@@ -4,14 +4,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { databaseConfig } from './core/config/database.config';
 
 @Module({
-    imports: [
-        ConfigModule.forRoot({
-            isGlobal: true,
-            envFilePath: '.env',
-        }),
-        TypeOrmModule.forRootAsync(databaseConfig),
-    ],
-    controllers: [],
-    providers: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    TypeOrmModule.forRootAsync(databaseConfig),
+  ],
+  controllers: [],
+  providers: [],
 })
-export class AppModule { }
+export class AppModule {}

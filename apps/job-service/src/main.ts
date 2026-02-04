@@ -2,12 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
+import { sharedCorsConfig } from '@app/common';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({
-    origin: process.env.CORS_ORIGINS?.split(',') || '*',
-  });
+  app.enableCors(sharedCorsConfig);
 
   app.setGlobalPrefix('api/v1');
 
