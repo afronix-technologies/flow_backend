@@ -34,8 +34,8 @@ export class AuthController {
     if (result.sessionId) {
       res.cookie('session_token', result.sessionId, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000, // 1 day
         domain: process.env.DOMAIN ? `.${process.env.DOMAIN}` : undefined,
@@ -45,8 +45,8 @@ export class AuthController {
     if (result.refreshToken) {
       res.cookie('refresh_token', result.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         path: '/auth/refresh',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
@@ -70,8 +70,8 @@ export class AuthController {
     if (result.sessionId) {
       res.cookie('session_token', result.sessionId, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000, // 1 day
         domain: process.env.DOMAIN ? `.${process.env.DOMAIN}` : undefined,
@@ -81,8 +81,8 @@ export class AuthController {
     if (result.refreshToken) {
       res.cookie('refresh_token', result.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         path: '/auth/refresh', // Scope to refresh endpoint
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
