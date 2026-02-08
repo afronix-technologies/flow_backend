@@ -39,4 +39,6 @@ nginx/ssl/*
 !nginx/ssl/.gitkeep
 
 # certbot data
-certbot-data/
+
+# uploads
+uploads/

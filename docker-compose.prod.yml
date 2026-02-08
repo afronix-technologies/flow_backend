@@ -191,6 +191,49 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # File Service
+  file-service:
+    image: ${DOCKER_REGISTRY}/flow-file-service:${IMAGE_TAG:-production-latest}
+    container_name: file-service
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - FILE_SERVICE_PORT=3004
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - UPLOAD_DIR=/srv/data/uploads
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-524288000}
+      - BASE_URL=https://${DOMAIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - afronix-network
+    volumes:
+      - /srv/data/uploads:/srv/data/uploads
+      - /var/log/applications/flow:/app/logs
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3004/api/v1/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
@@ -210,6 +253,7 @@ services:
       - auth-service
       - notification-service
       - job-service
+      - file-service
     networks:
       - afronix-network
     healthcheck:

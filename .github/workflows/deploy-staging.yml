@@ -26,6 +26,8 @@ jobs:
             port: 3002
           - name: job-service
             port: 3003
+          - name: file-service
+            port: 3004
     
     steps:
       - name: Checkout code
@@ -123,6 +125,7 @@ jobs:
           AUTH_SERVICE_PORT=3001
           NOTIFICATION_SERVICE_PORT=3002
           JOB_SERVICE_PORT=3003
+          FILE_SERVICE_PORT=3004
           
           # SMTP
           SMTP_HOST=${{ secrets.SMTP_HOST }}
@@ -140,6 +143,10 @@ jobs:
           MICROSOFT_CLIENT_SECRET=${{ secrets.MICROSOFT_CLIENT_SECRET }}
           MICROSOFT_CALLBACK_URL=${{ secrets.MICROSOFT_CALLBACK_URL }}
           MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_TENANT_ID }}
+          
+          # File Storage
+          UPLOAD_DIR=/srv/data/uploads
+          MAX_FILE_SIZE=524288000
           
           # CORS - Updated for wildcard subdomains
           CORS_ORIGINS=https://*.staging.flow.afronix.com,https://staging.flow.afronix.com,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:4200,http://localhost:4201,https://flowwithafronix.vercel.app

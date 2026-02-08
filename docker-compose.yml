@@ -92,6 +92,34 @@ services:
     networks:
       - afronix-network
 
+  # File Service
+  file-service:
+    build:
+      context: .
+      dockerfile: apps/file-service/Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - FILE_SERVICE_PORT=3004
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - UPLOAD_DIR=/app/uploads
+      - MAX_FILE_SIZE=524288000
+      - BASE_URL=http://localhost:3004
+    depends_on:
+      - postgres
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./uploads:/app/uploads
+    command: npx nest start file-service --watch
+    networks:
+      - afronix-network
+
 networks:
   afronix-network:
     driver: bridge
