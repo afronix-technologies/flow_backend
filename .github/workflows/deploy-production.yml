@@ -159,7 +159,7 @@ jobs:
           MAX_FILE_SIZE=524288000
           
           # Security - Updated for wildcard subdomains
-          CORS_ORIGINS=https://*.flow.afronix.com,https://flow.afronix.com,https://app.afronix.com,https://flowwithafronix.vercel.app
+          CORS_ORIGINS=https://*.flow.afronix.com,https://flow.afronix.com,https://flow.afronix.com:8443,https://app.afronix.com,https://flowwithafronix.vercel.app
           THROTTLE_TTL=60
           THROTTLE_LIMIT=1000
           
