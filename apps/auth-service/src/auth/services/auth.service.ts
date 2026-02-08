@@ -51,7 +51,7 @@ export class AuthService {
     private rolesService: RolesService,
     private authGateway: AuthGateway,
     private sessionService: SessionService,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
     // 1. Check if user exists (by email, we'll check globally for now or effectively unique per org, but usually unique email is better for UX,
@@ -86,7 +86,7 @@ export class AuthService {
     // Transactional would be better
     const organization = this.organizationRepository.create({
       name: registerDto.organizationName,
-      slug: registerDto.slug, // Add slug
+      slug: registerDto.slug || this.generateSlug(registerDto.organizationName),
       teamSize: 1,
     });
     const savedOrg = await this.organizationRepository.save(organization);
@@ -616,5 +616,14 @@ export class AuthService {
         onboardingStep: organization.onboardingStep,
       },
     };
+  }
+
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 }
