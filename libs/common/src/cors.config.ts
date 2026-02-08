@@ -39,6 +39,10 @@ export const sharedCorsConfig: CorsOptions = {
     // Check patterns
     if (allowedOriginPatterns.some((pattern) => pattern.test(origin))) return callback(null, true);
 
+    console.error(`[CORS] Blocked Origin: ${origin}`);
+    console.error(`[CORS] Allowed Origins: ${JSON.stringify(allowedOrigins)}`);
+    console.error(`[CORS] Allowed Patterns: ${allowedOriginPatterns.map(p => p.toString())}`);
+
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
