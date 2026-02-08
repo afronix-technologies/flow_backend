@@ -30,8 +30,8 @@
         "docker:prod": "docker-compose -f docker-compose.prod.yml up --build -d",
         "generate:module": "node scripts/generate-module.js",
         "migration:create": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create",
-        "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d apps/auth-service/src/core/config/database.config.ts",
-        "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d apps/auth-service/src/core/config/database.config.ts"
+        "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d apps/auth-service/src/data-source.ts",
+        "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d apps/auth-service/src/data-source.ts"
     },
     "dependencies": {
         "@nestjs/bull": "^11.0.4",
