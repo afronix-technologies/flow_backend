@@ -59,10 +59,6 @@ export class FilesController {
     @UploadedFiles() files: Express.Multer.File[],
     @Query('metadata') metadata?: string,
   ): Promise<UploadResponseDto> {
-    console.log('Upload request received');
-    console.log('Files:', files ? files.map((f) => f.originalname) : 'None');
-    console.log('Metadata:', metadata);
-
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }
@@ -98,11 +94,8 @@ export class FilesController {
     @Param('filename') filename: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
-    console.log(`[FileService] Download request - ID: ${id}, Filename: ${filename}`);
-
     try {
       const { file, filePath } = await this.filesService.getFileById(id);
-      console.log(`[FileService] File found: ${filePath}`);
 
       // Set headers for file download
       res.set({
@@ -116,7 +109,6 @@ export class FilesController {
       const fileStream = fs.createReadStream(filePath);
       return new StreamableFile(fileStream);
     } catch (error) {
-      console.error(`[FileService] Error downloading file ${id}:`, error);
       throw error;
     }
   }
