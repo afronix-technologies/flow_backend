@@ -13,7 +13,7 @@ export class FilesService {
   constructor(
     @InjectRepository(File)
     private readonly fileRepository: Repository<File>,
-  ) {}
+  ) { }
 
   /**
    * Generate date-based path (YYYY/MM/DD)
@@ -91,7 +91,7 @@ export class FilesService {
         mimeType: savedFile.mimeType,
         size: savedFile.size,
         path: savedFile.path,
-        url: `${storageConfig.baseUrl}/api/v1/files/${savedFile.id}/${savedFile.originalName}`,
+        url: `${storageConfig.baseUrl}/api/v1/files/${savedFile.id}/${encodeURIComponent(savedFile.originalName)}`,
         uploadedAt: savedFile.uploadedAt, // IMPORTANT: Include upload date
         metadata: this.parseMetadata(savedFile.metadata),
       });
@@ -139,7 +139,7 @@ export class FilesService {
       mimeType: file.mimeType,
       size: file.size,
       path: file.path,
-      url: `${storageConfig.baseUrl}/api/v1/files/${file.id}/${file.originalName}`,
+      url: `${storageConfig.baseUrl}/api/v1/files/${file.id}/${encodeURIComponent(file.originalName)}`,
       uploadedAt: file.uploadedAt, // IMPORTANT: Include upload date
       metadata: this.parseMetadata(file.metadata),
     };
@@ -182,7 +182,7 @@ export class FilesService {
       mimeType: file.mimeType,
       size: file.size,
       path: file.path,
-      url: `${storageConfig.baseUrl}/api/v1/files/${file.id}/${file.originalName}`,
+      url: `${storageConfig.baseUrl}/api/v1/files/${file.id}/${encodeURIComponent(file.originalName)}`,
       uploadedAt: file.uploadedAt, // IMPORTANT: Include upload date
       metadata: this.parseMetadata(file.metadata),
     }));

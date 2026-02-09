@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   Res,
   BadRequestException,
+  StreamableFile,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import {
@@ -27,7 +28,7 @@ import * as fs from 'fs';
 @ApiTags('files')
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(private readonly filesService: FilesService) { }
 
   @Post('upload')
   @ApiOperation({ summary: 'Upload one or more files' })
@@ -95,19 +96,29 @@ export class FilesController {
   async downloadFile(
     @Param('id') id: string,
     @Param('filename') filename: string,
-    @Res() res: Response,
-  ): Promise<void> {
-    const { file, filePath } = await this.filesService.getFileById(id);
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    console.log(`[FileService] Download request - ID: ${id}, Filename: ${filename}`);
 
-    // Set headers for file download
-    res.setHeader('Content-Type', file.mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${file.originalName}"`);
-    res.setHeader('Content-Length', file.size);
-    res.setHeader('X-Upload-Date', file.uploadedAt.toISOString()); // Include upload date in header
+    try {
+      const { file, filePath } = await this.filesService.getFileById(id);
+      console.log(`[FileService] File found: ${filePath}`);
 
-    // Stream file to response
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
+      // Set headers for file download
+      res.set({
+        'Content-Type': file.mimeType,
+        'Content-Disposition': `inline; filename="${file.originalName}"`,
+        'Content-Length': file.size.toString(),
+        'X-Upload-Date': file.uploadedAt.toISOString(),
+      });
+
+      // Stream file to response
+      const fileStream = fs.createReadStream(filePath);
+      return new StreamableFile(fileStream);
+    } catch (error) {
+      console.error(`[FileService] Error downloading file ${id}:`, error);
+      throw error;
+    }
   }
 
   @Get(':id/metadata')
