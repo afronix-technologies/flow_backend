@@ -19,8 +19,8 @@ import { File } from './files/entities/file.entity';
       database: process.env.DATABASE_NAME || 'flow_dev',
       entities: [File],
       autoLoadEntities: true,
-      synchronize: true, // Force sync for debugging
-      logging: true,
+      synchronize: process.env.NODE_ENV !== 'production', // Safer default, false in prod
+      logging: process.env.NODE_ENV !== 'production',
     }),
     FilesModule,
   ],
