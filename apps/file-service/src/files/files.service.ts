@@ -16,7 +16,7 @@ export class FilesService {
   ) { }
 
   /**
-   * Generate date-based path (YYYY/MM/DD)
+   * Generate date-based path (YYYY/MM/DD))
    */
   private getDateBasedPath(): string {
     const now = new Date();
