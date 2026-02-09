@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FilesModule } from './files/files.module';
 import { AppController } from './app.controller';
+import { File } from './files/entities/file.entity';
 
 @Module({
   imports: [
@@ -16,13 +17,13 @@ import { AppController } from './app.controller';
       username: process.env.DATABASE_USER || 'postgres',
       password: process.env.DATABASE_PASSWORD || 'postgres',
       database: process.env.DATABASE_NAME || 'flow_dev',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      entities: [File],
       autoLoadEntities: true,
-      synchronize: process.env.NODE_ENV === 'development', // Auto-sync in dev only
-      logging: process.env.NODE_ENV === 'development',
+      synchronize: true, // Force sync for debugging
+      logging: true,
     }),
     FilesModule,
   ],
   controllers: [AppController],
 })
-export class AppModule {}
+export class AppModule { }
