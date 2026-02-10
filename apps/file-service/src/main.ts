@@ -6,52 +6,52 @@ import helmet from 'helmet';
 import { sharedCorsConfig } from '@app/common';
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule);
 
-    // Security - CORS Configuration
-    app.enableCors(sharedCorsConfig);
+  // Security - CORS Configuration
+  app.enableCors(sharedCorsConfig);
 
-    app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1');
 
-    // Use helmet with CSP relaxed for Swagger
-    app.use(
-        helmet({
-            contentSecurityPolicy: false, // Disable CSP for Swagger to work!
-        }),
-    );
+  // Use helmet with CSP relaxed for Swagger
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Disable CSP for Swagger to work!
+    }),
+  );
 
-    app.useGlobalPipes(
-        new ValidationPipe({
-            whitelist: true,
-            transform: true,
-            forbidNonWhitelisted: true,
-        }),
-    );
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
-    // Swagger Configuration
-    const config = new DocumentBuilder()
-        .setTitle('Flow File Service API')
-        .setDescription('Public File Storage and Management API')
-        .setVersion('1.0')
-        .build();
+  // Swagger Configuration
+  const config = new DocumentBuilder()
+    .setTitle('Flow File Service API')
+    .setDescription('Public File Storage and Management API')
+    .setVersion('1.0')
+    .build();
 
-    const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, config);
 
-    SwaggerModule.setup('api/docs/files', app, document, {
-        customSiteTitle: 'Flow File API',
-        swaggerOptions: {
-            persistAuthorization: true,
-            url: '/api/docs/files-json',
-        },
-        customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css',
-        customJs: [
-            'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js',
-            'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
-        ],
-    });
+  SwaggerModule.setup('api/docs/files', app, document, {
+    customSiteTitle: 'Flow File API',
+    swaggerOptions: {
+      persistAuthorization: true,
+      url: '/api/docs/files-json',
+    },
+    customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css',
+    customJs: [
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js',
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
+    ],
+  });
 
-    const port = process.env.FILE_SERVICE_PORT || 3004;
-    await app.listen(port);
-    console.log(`File Service is running on port ${port}`);
+  const port = process.env.FILE_SERVICE_PORT || 3004;
+  await app.listen(port);
+  console.log(`File Service is running on port ${port}`);
 }
 bootstrap();

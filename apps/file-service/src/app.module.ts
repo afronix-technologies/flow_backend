@@ -26,4 +26,4 @@ import { File } from './files/entities/file.entity';
   ],
   controllers: [AppController],
 })
-export class AppModule { }
+export class AppModule {}

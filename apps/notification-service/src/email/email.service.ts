@@ -20,7 +20,9 @@ export class EmailService {
 
     console.log('[SMTP DEBUG] Pass first 4 chars:', process.env.SMTP_PASS?.substring(0, 4));
     if (process.env.SMTP_HOST) {
-      console.log(`[EmailService] Configuring SMTP: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT} User: ${process.env.SMTP_USER}`);
+      console.log(
+        `[EmailService] Configuring SMTP: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT} User: ${process.env.SMTP_USER}`,
+      );
       this.transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT || '587'),
@@ -32,7 +34,7 @@ export class EmailService {
       });
 
       // Verify connection
-      this.transporter.verify((error, success) => {
+      this.transporter.verify((error) => {
         if (error) {
           console.error('[EmailService] SMTP Connection Error:', error);
         } else {

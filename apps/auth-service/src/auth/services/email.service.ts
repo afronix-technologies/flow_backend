@@ -31,7 +31,10 @@ export class EmailService {
 
   async sendPasswordResetEmail(email: string, token: string) {
     try {
-      await axios.post(`${this.notificationServiceUrl}/api/v1/email/reset-password`, { email, token });
+      await axios.post(`${this.notificationServiceUrl}/api/v1/email/reset-password`, {
+        email,
+        token,
+      });
       this.logger.log(`Requested password reset email for ${email}`);
     } catch (error) {
       this.logger.error(`Failed to trigger password reset email: ${error.message}`);

@@ -13,7 +13,7 @@ export class FilesService {
   constructor(
     @InjectRepository(File)
     private readonly fileRepository: Repository<File>,
-  ) { }
+  ) {}
 
   /**
    * Generate date-based path (YYYY/MM/DD))

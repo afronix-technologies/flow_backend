@@ -28,7 +28,7 @@ import * as fs from 'fs';
 @ApiTags('files')
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) { }
+  constructor(private readonly filesService: FilesService) {}
 
   @Post('upload')
   @ApiOperation({ summary: 'Upload one or more files' })
