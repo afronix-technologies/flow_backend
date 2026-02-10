@@ -619,11 +619,15 @@ export class AuthService {
   }
 
   private generateSlug(name: string): string {
-    return name
+    const baseSlug = name
       .toLowerCase()
       .trim()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-')
       .replace(/^-+|-+$/g, '');
+
+    // Append random 4-char string to ensure uniqueness
+    const randomSuffix = Math.random().toString(36).substring(2, 6);
+    return `${baseSlug}-${randomSuffix}`;
   }
 }

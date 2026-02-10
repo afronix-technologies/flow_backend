@@ -120,6 +120,9 @@ jobs:
           DATABASE_PASSWORD=${{ secrets.PROD_DATABASE_PASSWORD }}
           DATABASE_NAME=flow_production
           DATABASE_SSL=true
+
+          # Frontend
+          FRONTEND_URL=https://flowwithafronix.vercel.app
           
           # Redis
           REDIS_HOST=redis
