@@ -6,8 +6,8 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private configService: ConfigService) {
-    const clientID = configService.get('GOOGLE_CLIENT_ID') || 'dummy';
-    const clientSecret = configService.get('GOOGLE_CLIENT_SECRET') || 'dummy';
+    const clientID = configService.get('GOOGLE_CLIENT_ID');
+    const clientSecret = configService.get('GOOGLE_CLIENT_SECRET');
 
     super({
       clientID,
@@ -15,11 +15,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       callbackURL: configService.get('GOOGLE_CALLBACK_URL') || 'http://localhost:3001/callback',
       scope: ['email', 'profile'],
     });
-
-    // Log if disabled
-    if (clientID === 'dummy') {
-      console.log('Google OAuth disabled - no credentials provided');
-    }
   }
 
   async validate(
