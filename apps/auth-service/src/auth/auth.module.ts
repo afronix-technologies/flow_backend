@@ -39,6 +39,7 @@ import { OAuthController } from './controllers/oauth.controller';
 import { OAuthService } from './services/oauth.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { MicrosoftStrategy } from './strategies/microsoft.strategy';
+import { buildUnconfiguredStrategy } from './strategies/unconfigured.strategy';
 
 @Module({
   imports: [
@@ -82,7 +83,21 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
     PermissionService,
     OAuthService,
     JwtStrategy,
-    GoogleStrategy,
+    {
+      provide: 'GOOGLE_STRATEGY',
+      useFactory: (config: ConfigService) => {
+        const clientID = config.get('GOOGLE_CLIENT_ID');
+        const clientSecret = config.get('GOOGLE_CLIENT_SECRET');
+
+        if (clientID && clientSecret) {
+          return new GoogleStrategy(config);
+        }
+
+        const StrategyClass = buildUnconfiguredStrategy('google');
+        return new StrategyClass();
+      },
+      inject: [ConfigService],
+    },
     MicrosoftStrategy,
     JwtAuthGuard,
     RolesGuard,
