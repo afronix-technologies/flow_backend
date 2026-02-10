@@ -16,7 +16,7 @@ async function bootstrap() {
     // Use helmet with CSP relaxed for Swagger
     app.use(
         helmet({
-            contentSecurityPolicy: false, // Disable CSP for Swagger to work
+            contentSecurityPolicy: false, // Disable CSP for Swagger to work!
         }),
     );
 
