@@ -3,24 +3,24 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-strategy';
 
 class NoOpStrategy extends Strategy {
-    name: string;
+  name: string;
 
-    constructor() {
-        super();
-        this.name = 'noop';
-    }
+  constructor() {
+    super();
+    this.name = 'noop';
+  }
 
-    authenticate() {
-        this.fail({ message: 'OAuth provider not configured' }, 400);
-    }
+  authenticate() {
+    this.fail({ message: 'OAuth provider not configured' }, 400);
+  }
 }
 
 export function buildUnconfiguredStrategy(strategyName: string) {
-    @Injectable()
-    class UnconfiguredStrategyImpl extends PassportStrategy(NoOpStrategy, strategyName) {
-        constructor() {
-            super();
-        }
+  @Injectable()
+  class UnconfiguredStrategyImpl extends PassportStrategy(NoOpStrategy, strategyName) {
+    constructor() {
+      super();
     }
-    return UnconfiguredStrategyImpl;
+  }
+  return UnconfiguredStrategyImpl;
 }

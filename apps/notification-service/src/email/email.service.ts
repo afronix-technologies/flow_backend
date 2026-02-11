@@ -72,9 +72,8 @@ export class EmailService {
     }
   }
 
-  async sendVerificationEmail(email: string, token: string) {
-    const url = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
-    const html = verificationTemplate(url);
+  async sendVerificationEmail(email: string, code: string) {
+    const html = verificationTemplate(code);
     await this.sendMail(email, 'Verify your email for Flow', html);
   }
 

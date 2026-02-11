@@ -69,7 +69,7 @@ export class AuthService {
     if (existingUser) {
       if (!existingUser.emailVerified) {
         // Resend verification email
-        const emailVerificationToken = uuidv4();
+        const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString();
         existingUser.emailVerificationToken = emailVerificationToken;
         await this.userRepository.save(existingUser);
 
@@ -91,7 +91,7 @@ export class AuthService {
     });
     const savedOrg = await this.organizationRepository.save(organization);
 
-    const emailVerificationToken = uuidv4();
+    const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Get Admin Role
     const adminRole = await this.rolesService.findByName('admin');
@@ -125,14 +125,24 @@ export class AuthService {
     return { message: 'Check your email to verify your account' };
   }
 
-  async verifyEmail(token: string): Promise<AuthResponseDto> {
+  async verifyEmail(email: string, code: string): Promise<AuthResponseDto> {
     const user = await this.userRepository.findOne({
-      where: { emailVerificationToken: token },
+      where: { email },
       relations: ['organization'],
     });
 
     if (!user) {
-      throw new NotFoundException('Invalid verification token');
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.emailVerified) {
+      // Idempotency: if already verified, maybe just return auth response?
+      // For now, let's allow re-login via this flow or throw?
+      // Let's assume valid flow -> auto login.
+    }
+
+    if (user.emailVerificationToken !== code) {
+      throw new BadRequestException('Invalid verification code');
     }
 
     user.emailVerified = true;

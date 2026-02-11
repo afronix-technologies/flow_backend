@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Query, UseGuards, Res } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -6,6 +6,7 @@ import { AuthService } from '../services/auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
+import { VerifyEmailDto } from '../dto/verify-email.dto';
 
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -26,10 +27,10 @@ export class AuthController {
   }
 
   @Post('verify-email')
-  @ApiOperation({ summary: 'Verify email with token' })
+  @ApiOperation({ summary: 'Verify email with code' })
   @ApiResponse({ status: 200, type: AuthResponseDto })
-  async verifyEmail(@Query('token') token: string, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.verifyEmail(token);
+  async verifyEmail(@Body() verifyDto: VerifyEmailDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.verifyEmail(verifyDto.email, verifyDto.code);
 
     if (result.sessionId) {
       res.cookie('session_token', result.sessionId, {

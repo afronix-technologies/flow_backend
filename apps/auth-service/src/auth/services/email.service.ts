@@ -7,9 +7,9 @@ export class EmailService {
   private readonly notificationServiceUrl =
     process.env.NOTIFICATION_SERVICE_URL || 'http://notification-service:3002';
 
-  async sendVerificationEmail(email: string, token: string) {
+  async sendVerificationEmail(email: string, code: string) {
     try {
-      await axios.post(`${this.notificationServiceUrl}/api/v1/email/verify`, { email, token });
+      await axios.post(`${this.notificationServiceUrl}/api/v1/email/verify`, { email, code });
       this.logger.log(`Requested verification email for ${email}`);
     } catch (error) {
       this.logger.error(`Failed to trigger verification email: ${error.message}`);
