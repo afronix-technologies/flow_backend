@@ -35,7 +35,15 @@ export class OAuthController {
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Google OAuth callback' })
   async googleCallback(@Req() req, @Res({ passthrough: true }) res: Response) {
-    const authResponse = await this.oauthService.handleOAuthLogin(req.user, OAuthProvider.GOOGLE);
+    const ip = req.ip || (req.headers['x-forwarded-for'] as string) || '127.0.0.1';
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+
+    const authResponse = await this.oauthService.handleOAuthLogin(
+      req.user,
+      OAuthProvider.GOOGLE,
+      ip,
+      userAgent,
+    );
 
     if (authResponse.sessionId) {
       res.cookie('session_token', authResponse.sessionId, {
@@ -58,7 +66,8 @@ export class OAuthController {
       });
     }
 
-    return authResponse;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/auth/callback`);
   }
 
   @Get('microsoft')
@@ -72,9 +81,14 @@ export class OAuthController {
   @UseGuards(AuthGuard('microsoft'))
   @ApiOperation({ summary: 'Microsoft OAuth callback' })
   async microsoftLoginCallback(@Req() req, @Res() res) {
+    const ip = req.ip || (req.headers['x-forwarded-for'] as string) || '127.0.0.1';
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+
     const authResponse = await this.oauthService.handleOAuthLogin(
       req.user,
       OAuthProvider.MICROSOFT,
+      ip,
+      userAgent,
     );
     res.json(authResponse);
   }

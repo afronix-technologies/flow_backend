@@ -31,7 +31,12 @@ export class OAuthService {
     private sessionService: SessionService,
   ) {}
 
-  async handleOAuthLogin(userProfile: any, provider: OAuthProvider): Promise<AuthResponseDto> {
+  async handleOAuthLogin(
+    userProfile: any,
+    provider: OAuthProvider,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<AuthResponseDto> {
     if (!userProfile) {
       throw new UnauthorizedException('OAuth login failed');
     }
@@ -75,10 +80,15 @@ export class OAuthService {
       }
     }
 
-    return this.finalizeLogin(user, organization);
+    return this.finalizeLogin(user, organization, ipAddress, userAgent);
   }
 
-  private async finalizeLogin(user: User, organization: Organization): Promise<AuthResponseDto> {
+  private async finalizeLogin(
+    user: User,
+    organization: Organization,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<AuthResponseDto> {
     // Auto-login: Create Session
     const sessionId = await this.sessionService.createSession(user);
 
@@ -88,8 +98,8 @@ export class OAuthService {
       userId: user.id,
       token: refreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      ipAddress: '127.0.0.1', // Todo: Extract from request if possible, or pass it down
-      userAgent: 'OAuth Flow',
+      ipAddress,
+      userAgent,
     });
 
     const authResponse = this.authService.generateAuthResponse(user, organization);

@@ -146,6 +146,10 @@ jobs:
           MICROSOFT_CLIENT_SECRET=${{ secrets.MICROSOFT_CLIENT_SECRET }}
           MICROSOFT_CALLBACK_URL=${{ secrets.MICROSOFT_CALLBACK_URL }}
           MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_TENANT_ID }}
+
+          # Rate Limit 
+          THROTTLE_TTL=60000
+          THROTTLE_LIMIT=10000
           
           # File Storage
           UPLOAD_DIR=/srv/data/uploads

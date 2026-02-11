@@ -50,6 +50,8 @@ services:
       - MICROSOFT_CALLBACK_URL=${MICROSOFT_CALLBACK_URL}
       - MICROSOFT_TENANT_ID=${MICROSOFT_TENANT_ID}
       - FRONTEND_URL=${FRONTEND_URL}
+      - THROTTLE_LIMIT=${THROTTLE_LIMIT:-5}
+      - THROTTLE_TTL=${THROTTLE_TTL:-60000}
     depends_on:
       - postgres
     volumes:

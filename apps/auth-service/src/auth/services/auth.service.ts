@@ -4,6 +4,7 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -125,7 +126,12 @@ export class AuthService {
     return { message: 'Check your email to verify your account' };
   }
 
-  async verifyEmail(email: string, code: string): Promise<AuthResponseDto> {
+  async verifyEmail(
+    email: string,
+    code: string,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<AuthResponseDto> {
     const user = await this.userRepository.findOne({
       where: { email },
       relations: ['organization'],
@@ -159,8 +165,8 @@ export class AuthService {
       userId: user.id,
       token: refreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      ipAddress: '127.0.0.1',
-      userAgent: 'Verification Flow',
+      ipAddress,
+      userAgent,
     });
 
     const authResponse = this.generateAuthResponse(user, user.organization);
@@ -174,7 +180,11 @@ export class AuthService {
     };
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponseDto | { organizations: Organization[] }> {
+  async login(
+    loginDto: LoginDto,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<AuthResponseDto | { organizations: Organization[] }> {
     // Find users by email (could be multiple)
     const users = await this.userRepository
       .createQueryBuilder('user')
@@ -216,7 +226,15 @@ export class AuthService {
     if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
 
     if (!userToLogin.isActive) throw new UnauthorizedException('Account is disabled');
-    if (!userToLogin.emailVerified) throw new UnauthorizedException('Please verify your email');
+    if (!userToLogin.emailVerified) {
+      const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+      userToLogin.emailVerificationToken = emailVerificationToken;
+      await this.userRepository.save(userToLogin);
+      await this.emailService.sendVerificationEmail(userToLogin.email, emailVerificationToken);
+      throw new ForbiddenException(
+        'Email not verified. A new verification code has been sent to your email.',
+      );
+    }
 
     userToLogin.lastLogin = new Date();
     await this.userRepository.save(userToLogin);
@@ -236,8 +254,8 @@ export class AuthService {
       userId: userToLogin.id,
       token: refreshToken, // Should hash this in production
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      ipAddress: '127.0.0.1', // Todo: Extract from request
-      userAgent: 'Unknown', // Todo: Extract from request
+      ipAddress, // Extracted from request
+      userAgent, // Extracted from request
     });
 
     const authResponse = this.generateAuthResponse(userToLogin, userToLogin.organization);
