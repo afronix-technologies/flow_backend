@@ -141,7 +141,7 @@ npm run docker:prod        # Run with Docker (production)
 4. Create a Pull Request to `develop`
 5. Wait for CI checks and code review
 
-## 📄 License
+## 📄 License!
 
 UNLICENSED - © 2026 Afronix Technologies
 
