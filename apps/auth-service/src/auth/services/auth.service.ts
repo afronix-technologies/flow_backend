@@ -69,12 +69,11 @@ export class AuthService {
     const existingUser = await this.userRepository.findOne({ where: { email: registerDto.email } });
     if (existingUser) {
       if (!existingUser.emailVerified) {
-        // Resend verification email
-        const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString();
-        existingUser.emailVerificationToken = emailVerificationToken;
+        // Reuse existing code if still valid, otherwise generate new one
+        const code = this.generateOrReuseVerificationCode(existingUser);
         await this.userRepository.save(existingUser);
 
-        await this.emailService.sendVerificationEmail(existingUser.email, emailVerificationToken);
+        await this.emailService.sendVerificationEmail(existingUser.email, code);
         return { message: 'User already exists. Verification email sent again.' };
       }
       throw new ConflictException(
@@ -93,6 +92,7 @@ export class AuthService {
     const savedOrg = await this.organizationRepository.save(organization);
 
     const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Get Admin Role
     const adminRole = await this.rolesService.findByName('admin');
@@ -106,6 +106,7 @@ export class AuthService {
       role: adminRole,
       emailVerified: false,
       emailVerificationToken: emailVerificationToken,
+      emailVerificationExpires: emailVerificationExpires,
       isActive: true,
     });
     const savedUser = await this.userRepository.save(user);
@@ -142,17 +143,16 @@ export class AuthService {
     }
 
     if (user.emailVerified) {
-      // Idempotency: if already verified, maybe just return auth response?
-      // For now, let's allow re-login via this flow or throw?
-      // Let's assume valid flow -> auto login.
-    }
-
-    if (user.emailVerificationToken !== code) {
+      // Already verified, just generate auth response
+    } else if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
+      throw new BadRequestException('Verification code has expired. Please request a new one.');
+    } else if (user.emailVerificationToken !== code) {
       throw new BadRequestException('Invalid verification code');
     }
 
     user.emailVerified = true;
     user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
     user.lastLogin = new Date(); // Update last login
     await this.userRepository.save(user);
 
@@ -227,12 +227,11 @@ export class AuthService {
 
     if (!userToLogin.isActive) throw new UnauthorizedException('Account is disabled');
     if (!userToLogin.emailVerified) {
-      const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString();
-      userToLogin.emailVerificationToken = emailVerificationToken;
+      const code = this.generateOrReuseVerificationCode(userToLogin);
       await this.userRepository.save(userToLogin);
-      await this.emailService.sendVerificationEmail(userToLogin.email, emailVerificationToken);
+      await this.emailService.sendVerificationEmail(userToLogin.email, code);
       throw new ForbiddenException(
-        'Email not verified. A new verification code has been sent to your email.',
+        'Email not verified. A verification code has been sent to your email.',
       );
     }
 
@@ -644,6 +643,29 @@ export class AuthService {
         onboardingStep: organization.onboardingStep,
       },
     };
+  }
+
+  /**
+   * Reuses the existing verification code if it hasn't expired,
+   * otherwise generates a new 6-digit code with a 10-minute expiry.
+   * Mutates the user entity in place.
+   */
+  private generateOrReuseVerificationCode(user: User): string {
+    const now = new Date();
+    if (
+      user.emailVerificationToken &&
+      user.emailVerificationExpires &&
+      user.emailVerificationExpires > now
+    ) {
+      // Code is still valid, reuse it
+      return user.emailVerificationToken;
+    }
+
+    // Generate new code with 10-minute expiry
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.emailVerificationToken = code;
+    user.emailVerificationExpires = new Date(now.getTime() + 10 * 60 * 1000);
+    return code;
   }
 
   private generateSlug(name: string): string {

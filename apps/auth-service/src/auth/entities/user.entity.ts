@@ -61,6 +61,9 @@ export class User {
   @Column({ name: 'email_verification_token', nullable: true })
   emailVerificationToken: string;
 
+  @Column({ name: 'email_verification_expires', type: 'timestamp', nullable: true })
+  emailVerificationExpires: Date;
+
   @Column({ name: 'password_reset_token', nullable: true })
   passwordResetToken: string;
 
