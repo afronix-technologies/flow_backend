@@ -10,12 +10,24 @@ env:
   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
 jobs:
+  # ─── Job 0: Generate a single version tag shared across ALL matrix builds ───
+  generate-version:
+    name: Generate Version Tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Generate version
+        id: version
+        run: |
+          VERSION="v$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+
   build-and-push:
     name: Build & Push Production Images
     runs-on: ubuntu-latest
-    
-    outputs:
-      version: ${{ steps.version.outputs.version }}
+    needs: generate-version
     
     strategy:
       matrix:
@@ -28,17 +40,12 @@ jobs:
             port: 3003
           - name: file-service
             port: 3004
+          - name: settings-service
+            port: 3005
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Generate version
-        id: version
-        run: |
-          VERSION="v$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Version: $VERSION"
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -55,7 +62,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/flow-${{ matrix.service.name }}
           tags: |
-            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=${{ needs.generate-version.outputs.version }}
             type=raw,value=production-latest
             type=sha,prefix=prod-
       
@@ -68,7 +75,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: |
             ${{ steps.meta.outputs.labels }}
-            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.version=${{ needs.generate-version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -78,12 +85,12 @@ jobs:
       - name: Image summary
         run: |
           echo "✅ Built and pushed: flow-${{ matrix.service.name }}"
-          echo "🏷️ Version: ${{ steps.version.outputs.version }}"
+          echo "🏷️ Version: ${{ needs.generate-version.outputs.version }}"
 
   deploy-to-production:
     name: Deploy to Production VPS
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: [generate-version, build-and-push]
     # environment: production  # Uncomment after creating the environment in GitHub Settings
     
     steps:
@@ -139,6 +146,7 @@ jobs:
           NOTIFICATION_SERVICE_PORT=3002
           JOB_SERVICE_PORT=3003
           FILE_SERVICE_PORT=3004
+          SETTINGS_SERVICE_PORT=3005
           
           # SMTP
           SMTP_HOST=${{ secrets.SMTP_HOST }}
@@ -168,7 +176,7 @@ jobs:
           
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
-          IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
+          IMAGE_TAG=${{ needs.generate-version.outputs.version }}
           
           # Nginx - Updated for wildcard subdomains
           DOMAIN=flow.afronix.com
@@ -199,7 +207,7 @@ jobs:
           
           echo "📦 Pulling latest Docker images..."
           export DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
-          export IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
+          export IMAGE_TAG=${{ needs.generate-version.outputs.version }}
           
           echo "🛑 Freeing up ports..."
 
@@ -226,7 +234,7 @@ jobs:
           sleep 10
           
           # Health check new containers
-          docker compose exec -T auth-service curl -f http://localhost:3001/health || {
+          docker compose exec -T auth-service curl -f http://localhost:3001/api/v1/health || {
             echo "❌ Health check failed, rolling back..."
             docker compose --env-file .env.production -f docker-compose.prod.yml down
             exit 1
@@ -300,7 +308,7 @@ jobs:
           echo "🎉 Production deployment successful!"
           echo "📍 Wildcard URL: https://*.flow.afronix.com"
           echo "📍 Base URL: https://flow.afronix.com"
-          echo "🏷️ Version: ${{ needs.build-and-push.outputs.version }}"
+          echo "🏷️ Version: ${{ needs.generate-version.outputs.version }}"
           echo "📝 Commit: ${{ github.event.head_commit.message }}"
           echo "👤 Deployed by: ${{ github.actor }}"
 

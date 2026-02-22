@@ -247,6 +247,48 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Settings Service
+  settings-service:
+    image: ${DOCKER_REGISTRY}/flow-settings-service:${IMAGE_TAG:-production-latest}
+    container_name: settings-service
+    restart: unless-stopped
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - SETTINGS_SERVICE_PORT=3005
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_SSL=${DATABASE_SSL:-false}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - afronix-network
+    volumes:
+      - /var/log/applications/flow:/app/logs
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3005/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
@@ -267,6 +309,7 @@ services:
       - notification-service
       - job-service
       - file-service
+      - settings-service
     networks:
       - afronix-network
     healthcheck:
