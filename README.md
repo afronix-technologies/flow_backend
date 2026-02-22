@@ -145,7 +145,7 @@ npm run docker:prod        # Run with Docker (production)
 
 UNLICENSED - © 2026 Afronix Technologies
 
-## 🆘 Support!
+## 🆘 Support
 
 - **Documentation**: [Deployment Guide](./docs/DEPLOYMENT.md)
 - **Issues**: [GitHub Issues](https://github.com/afronix-technologies/flow_backend/issues)
