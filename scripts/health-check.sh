@@ -92,6 +92,16 @@ else
     FAILED=1
 fi
 
+# Check Settings Service
+print_info "Checking Settings Service..."
+SETTINGS_RESPONSE=$(docker exec settings-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3005/api/v1/settings/health 2>/dev/null || echo "000")
+if [ "$SETTINGS_RESPONSE" = "200" ]; then
+    print_success "Settings Service is healthy (HTTP 200)"
+else
+    print_error "Settings Service is not responding (HTTP $SETTINGS_RESPONSE)"
+    FAILED=1
+fi
+
 # Check disk space
 print_info "Checking disk space..."
 DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
