@@ -4,6 +4,7 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -28,6 +29,9 @@ import { RolesService } from './roles.service';
 import { AuthGateway } from '../gateways/auth.gateway';
 import { v4 as uuidv4 } from 'uuid';
 
+import { RefreshToken } from '../entities/refresh-token.entity';
+import { SessionService } from './session.service';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -39,12 +43,15 @@ export class AuthService {
     private userOrganizationRepository: Repository<UserOrganization>,
     @InjectRepository(Invitation)
     private invitationRepository: Repository<Invitation>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: Repository<RefreshToken>,
     private passwordService: PasswordService,
     private jwtService: JwtService,
     private configService: ConfigService,
     private emailService: EmailService,
     private rolesService: RolesService,
     private authGateway: AuthGateway,
+    private sessionService: SessionService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
@@ -62,12 +69,11 @@ export class AuthService {
     const existingUser = await this.userRepository.findOne({ where: { email: registerDto.email } });
     if (existingUser) {
       if (!existingUser.emailVerified) {
-        // Resend verification email
-        const emailVerificationToken = uuidv4();
-        existingUser.emailVerificationToken = emailVerificationToken;
+        // Reuse existing code if still valid, otherwise generate new one
+        const code = this.generateOrReuseVerificationCode(existingUser);
         await this.userRepository.save(existingUser);
 
-        await this.emailService.sendVerificationEmail(existingUser.email, emailVerificationToken);
+        await this.emailService.sendVerificationEmail(existingUser.email, code);
         return { message: 'User already exists. Verification email sent again.' };
       }
       throw new ConflictException(
@@ -80,11 +86,13 @@ export class AuthService {
     // Transactional would be better
     const organization = this.organizationRepository.create({
       name: registerDto.organizationName,
+      slug: registerDto.slug || this.generateSlug(registerDto.organizationName),
       teamSize: 1,
     });
     const savedOrg = await this.organizationRepository.save(organization);
 
-    const emailVerificationToken = uuidv4();
+    const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Get Admin Role
     const adminRole = await this.rolesService.findByName('admin');
@@ -98,6 +106,7 @@ export class AuthService {
       role: adminRole,
       emailVerified: false,
       emailVerificationToken: emailVerificationToken,
+      emailVerificationExpires: emailVerificationExpires,
       isActive: true,
     });
     const savedUser = await this.userRepository.save(user);
@@ -118,24 +127,64 @@ export class AuthService {
     return { message: 'Check your email to verify your account' };
   }
 
-  async verifyEmail(token: string): Promise<AuthResponseDto> {
+  async verifyEmail(
+    email: string,
+    code: string,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<AuthResponseDto> {
     const user = await this.userRepository.findOne({
-      where: { emailVerificationToken: token },
+      where: { email },
       relations: ['organization'],
     });
 
     if (!user) {
-      throw new NotFoundException('Invalid verification token');
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.emailVerified) {
+      // Already verified, just generate auth response
+    } else if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
+      throw new BadRequestException('Verification code has expired. Please request a new one.');
+    } else if (user.emailVerificationToken !== code) {
+      throw new BadRequestException('Invalid verification code');
     }
 
     user.emailVerified = true;
     user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    user.lastLogin = new Date(); // Update last login
     await this.userRepository.save(user);
 
-    return this.generateAuthResponse(user, user.organization);
+    // Auto-login: Create Session
+    const sessionId = await this.sessionService.createSession(user);
+
+    // Auto-login: Create Refresh Token
+    const refreshToken = uuidv4();
+    await this.refreshTokenRepository.save({
+      userId: user.id,
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      ipAddress,
+      userAgent,
+    });
+
+    const authResponse = this.generateAuthResponse(user, user.organization);
+
+    return {
+      sessionId,
+      refreshToken,
+      accessToken: authResponse.accessToken, // Include access token
+      user: authResponse.user,
+      organization: authResponse.organization,
+    };
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponseDto | { organizations: Organization[] }> {
+  async login(
+    loginDto: LoginDto,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<AuthResponseDto | { organizations: Organization[] }> {
     // Find users by email (could be multiple)
     const users = await this.userRepository
       .createQueryBuilder('user')
@@ -177,12 +226,46 @@ export class AuthService {
     if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
 
     if (!userToLogin.isActive) throw new UnauthorizedException('Account is disabled');
-    if (!userToLogin.emailVerified) throw new UnauthorizedException('Please verify your email');
+    if (!userToLogin.emailVerified) {
+      const code = this.generateOrReuseVerificationCode(userToLogin);
+      await this.userRepository.save(userToLogin);
+      await this.emailService.sendVerificationEmail(userToLogin.email, code);
+      throw new ForbiddenException(
+        'Email not verified. A verification code has been sent to your email.',
+      );
+    }
 
     userToLogin.lastLogin = new Date();
     await this.userRepository.save(userToLogin);
 
-    return this.generateAuthResponse(userToLogin, userToLogin.organization);
+    if (!userToLogin.organization) {
+      throw new UnauthorizedException(
+        'No organization assigned to this account. Please contact support.',
+      );
+    }
+
+    // Create Redis Session
+    const sessionId = await this.sessionService.createSession(userToLogin);
+
+    // Create Refresh Token (Long Lived)
+    const refreshToken = uuidv4();
+    await this.refreshTokenRepository.save({
+      userId: userToLogin.id,
+      token: refreshToken, // Should hash this in production
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      ipAddress, // Extracted from request
+      userAgent, // Extracted from request
+    });
+
+    const authResponse = this.generateAuthResponse(userToLogin, userToLogin.organization);
+
+    return {
+      sessionId,
+      refreshToken,
+      accessToken: authResponse.accessToken, // Include access token
+      user: authResponse.user,
+      organization: authResponse.organization, // Default org context
+    };
   }
 
   async validateUser(userId: string): Promise<User> {
@@ -556,8 +639,45 @@ export class AuthService {
       organization: {
         id: organization.id,
         name: organization.name,
+        slug: organization.slug,
         onboardingStep: organization.onboardingStep,
       },
     };
+  }
+
+  /**
+   * Reuses the existing verification code if it hasn't expired,
+   * otherwise generates a new 6-digit code with a 10-minute expiry.
+   * Mutates the user entity in place.
+   */
+  private generateOrReuseVerificationCode(user: User): string {
+    const now = new Date();
+    if (
+      user.emailVerificationToken &&
+      user.emailVerificationExpires &&
+      user.emailVerificationExpires > now
+    ) {
+      // Code is still valid, reuse it
+      return user.emailVerificationToken;
+    }
+
+    // Generate new code with 10-minute expiry
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.emailVerificationToken = code;
+    user.emailVerificationExpires = new Date(now.getTime() + 10 * 60 * 1000);
+    return code;
+  }
+
+  private generateSlug(name: string): string {
+    const baseSlug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    // Append random 4-char string to ensure uniqueness
+    const randomSuffix = Math.random().toString(36).substring(2, 6);
+    return `${baseSlug}-${randomSuffix}`;
   }
 }

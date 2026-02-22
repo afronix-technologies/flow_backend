@@ -64,7 +64,7 @@ fi
 
 # Check Notification Service
 print_info "Checking Notification Service..."
-NOTIF_RESPONSE=$(docker exec notification-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/api/v1/health 2>/dev/null || echo "000")
+NOTIF_RESPONSE=$(docker exec notification-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/api/v1/notifications/health 2>/dev/null || echo "000")
 if [ "$NOTIF_RESPONSE" = "200" ]; then
     print_success "Notification Service is healthy (HTTP 200)"
 else
@@ -74,11 +74,21 @@ fi
 
 # Check Job Service
 print_info "Checking Job Service..."
-JOB_RESPONSE=$(docker exec job-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/api/v1/health 2>/dev/null || echo "000")
+JOB_RESPONSE=$(docker exec job-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/api/v1/jobs/health 2>/dev/null || echo "000")
 if [ "$JOB_RESPONSE" = "200" ]; then
     print_success "Job Service is healthy (HTTP 200)"
 else
     print_error "Job Service is not responding (HTTP $JOB_RESPONSE)"
+    FAILED=1
+fi
+
+# Check File Service
+print_info "Checking File Service..."
+FILE_RESPONSE=$(docker exec file-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3004/api/v1/files/health 2>/dev/null || echo "000")
+if [ "$FILE_RESPONSE" = "200" ]; then
+    print_success "File Service is healthy (HTTP 200)"
+else
+    print_error "File Service is not responding (HTTP $FILE_RESPONSE)"
     FAILED=1
 fi
 

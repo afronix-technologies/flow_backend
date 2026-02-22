@@ -2,12 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
+import { sharedCorsConfig } from '@app/common';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({
-    origin: process.env.CORS_ORIGINS?.split(',') || '*',
-  });
+  app.enableCors(sharedCorsConfig);
 
   app.setGlobalPrefix('api/v1');
 
@@ -22,7 +22,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs/jobs', app, document, {
     customSiteTitle: 'Flow Job API',
     swaggerOptions: {
-      url: '/api/docs/jobs-json',  // ← ADD THIS
+      url: '/api/docs/jobs-json', // ← ADD THIS
     },
     customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css',
     customJs: [

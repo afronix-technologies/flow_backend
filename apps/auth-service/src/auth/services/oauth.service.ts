@@ -9,6 +9,9 @@ import { RolesService } from './roles.service';
 import { AuthService } from './auth.service';
 import { OAuthProvider } from '../enums/oauth-provider.enum';
 import { AuthResponseDto } from '../dto/auth-response.dto';
+import { RefreshToken } from '../entities/refresh-token.entity';
+import { SessionService } from './session.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class OAuthService {
@@ -21,16 +24,27 @@ export class OAuthService {
     private organizationRepository: Repository<Organization>,
     @InjectRepository(UserOrganization)
     private userOrganizationRepository: Repository<UserOrganization>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: Repository<RefreshToken>,
     private rolesService: RolesService,
     private authService: AuthService,
+    private sessionService: SessionService,
   ) {}
 
-  async handleOAuthLogin(userProfile: any, provider: OAuthProvider): Promise<AuthResponseDto> {
+  async handleOAuthLogin(
+    userProfile: any,
+    provider: OAuthProvider,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<AuthResponseDto> {
     if (!userProfile) {
       throw new UnauthorizedException('OAuth login failed');
     }
 
     const { email, providerId, accessToken, refreshToken } = userProfile;
+
+    let user: User;
+    let organization: Organization;
 
     // 1. Check if OAuth account exists
     const oauthAccount = await this.oauthAccountRepository.findOne({
@@ -44,27 +58,57 @@ export class OAuthService {
       oauthAccount.refreshToken = refreshToken;
       await this.oauthAccountRepository.save(oauthAccount);
 
-      // Generate response
-      return this.authService.generateAuthResponse(
-        oauthAccount.user,
-        oauthAccount.user.organization,
-      );
+      user = oauthAccount.user;
+      organization = oauthAccount.user.organization;
+    } else {
+      // 2. Check if user with email exists
+      const existingUser = await this.userRepository.findOne({
+        where: { email },
+        relations: ['organization', 'role'],
+      });
+
+      if (existingUser) {
+        // Link Account
+        await this.linkOAuthAccount(existingUser, userProfile, provider);
+        user = existingUser;
+        organization = existingUser.organization;
+      } else {
+        // 3. Create new User + Organization
+        const result = await this.createOAuthUser(userProfile, provider);
+        user = result.user;
+        organization = result.organization;
+      }
     }
 
-    // 2. Check if user with email exists
-    const user = await this.userRepository.findOne({
-      where: { email },
-      relations: ['organization', 'role'],
+    return this.finalizeLogin(user, organization, ipAddress, userAgent);
+  }
+
+  private async finalizeLogin(
+    user: User,
+    organization: Organization,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<AuthResponseDto> {
+    // Auto-login: Create Session
+    const sessionId = await this.sessionService.createSession(user);
+
+    // Auto-login: Create Refresh Token
+    const refreshToken = uuidv4();
+    await this.refreshTokenRepository.save({
+      userId: user.id,
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      ipAddress,
+      userAgent,
     });
 
-    if (user) {
-      // Link Account
-      await this.linkOAuthAccount(user, userProfile, provider);
-      return this.authService.generateAuthResponse(user, user.organization);
-    }
+    const authResponse = this.authService.generateAuthResponse(user, organization);
 
-    // 3. Create new User + Organization
-    return this.createOAuthUser(userProfile, provider);
+    return {
+      ...authResponse,
+      sessionId,
+      refreshToken, // DB-backed refresh token (UUID), authResponse might have JWT one if configured so, but usually we use one or other. AuthController uses UUID one for cookie.
+    };
   }
 
   async linkOAuthAccount(user: User, profile: any, provider: OAuthProvider) {
@@ -81,7 +125,10 @@ export class OAuthService {
     await this.oauthAccountRepository.save(newOAuth);
   }
 
-  async createOAuthUser(profile: any, provider: OAuthProvider): Promise<AuthResponseDto> {
+  async createOAuthUser(
+    profile: any,
+    provider: OAuthProvider,
+  ): Promise<{ user: User; organization: Organization }> {
     const { email, firstName, lastName } = profile;
 
     // Create Organization
@@ -113,22 +160,12 @@ export class OAuthService {
     await this.userOrganizationRepository.save({
       userId: savedUser.id,
       organizationId: savedOrg.id,
-      role: adminRole, // Assign dynamic role entity?
-      // Wait, UserOrganization entity has `role` column which is UserRole enum AND `roleId` FK?
-      // I updated UserOrganization to have `role: Role` (step 196).
+      role: adminRole,
     });
-    // We need to pass the Role entity or ID to UserOrganization
-    // Let's check UserOrganization entity definition.
-    // It has `role: Role`. So we need to assign it.
-    // Wait, UserOrganization still has `role: UserRole` enum column in my previous update (step 196)?
-    // Let's check step 196.
-    // I replaced `role: UserRole` with `role: Role` relation AND `roleId`.
-    // But I removed the enum column.
-    // So I should pass `role: adminRole`.
 
     // Create OAuth Account
     await this.linkOAuthAccount(savedUser, profile, provider);
 
-    return this.authService.generateAuthResponse(savedUser, savedOrg);
+    return { user: savedUser, organization: savedOrg };
   }
 }

@@ -30,12 +30,16 @@ import { Invitation } from './entities/invitation.entity';
 import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
 import { OAuthAccount } from './entities/oauth-account.entity';
-import { Session } from './entities/session.entity';
+import { RefreshToken } from './entities/refresh-token.entity';
+import { SessionService } from './services/session.service';
+import { SessionGuard } from './guards/session.guard';
+import { SubdomainGuard } from './guards/subdomain.guard';
 
 import { OAuthController } from './controllers/oauth.controller';
 import { OAuthService } from './services/oauth.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { MicrosoftStrategy } from './strategies/microsoft.strategy';
+import { buildUnconfiguredStrategy } from './strategies/unconfigured.strategy';
 
 @Module({
   imports: [
@@ -47,7 +51,7 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
       Role,
       Permission,
       OAuthAccount,
-      Session,
+      RefreshToken,
     ]),
     PassportModule,
     ConfigModule,
@@ -79,12 +83,29 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
     PermissionService,
     OAuthService,
     JwtStrategy,
-    GoogleStrategy,
+    {
+      provide: 'GOOGLE_STRATEGY',
+      useFactory: (config: ConfigService) => {
+        const clientID = config.get('GOOGLE_CLIENT_ID');
+        const clientSecret = config.get('GOOGLE_CLIENT_SECRET');
+
+        if (clientID && clientSecret) {
+          return new GoogleStrategy(config);
+        }
+
+        const StrategyClass = buildUnconfiguredStrategy('google');
+        return new StrategyClass();
+      },
+      inject: [ConfigService],
+    },
     MicrosoftStrategy,
     JwtAuthGuard,
     RolesGuard,
     PermissionsGuard,
     AuthGateway,
+    SessionService,
+    SessionGuard,
+    SubdomainGuard,
   ],
   exports: [
     AuthService,
@@ -94,6 +115,9 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
     JwtAuthGuard,
     RolesGuard,
     PermissionsGuard,
+    SessionService,
+    SessionGuard,
+    SubdomainGuard,
   ],
 })
 export class AuthModule {}

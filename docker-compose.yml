@@ -37,7 +37,9 @@ services:
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - DATABASE_NAME=${DATABASE_NAME}
       - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - DOMAIN=${DOMAIN}
       - NOTIFICATION_SERVICE_URL=http://notification-service:3002
       # OAuth Config
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -47,6 +49,9 @@ services:
       - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET}
       - MICROSOFT_CALLBACK_URL=${MICROSOFT_CALLBACK_URL}
       - MICROSOFT_TENANT_ID=${MICROSOFT_TENANT_ID}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - THROTTLE_LIMIT=${THROTTLE_LIMIT:-5}
+      - THROTTLE_TTL=${THROTTLE_TTL:-60000}
     depends_on:
       - postgres
     volumes:
@@ -87,6 +92,34 @@ services:
       - JOB_SERVICE_PORT=3003
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    networks:
+      - afronix-network
+
+  # File Service
+  file-service:
+    build:
+      context: .
+      dockerfile: apps/file-service/Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - FILE_SERVICE_PORT=3004
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - UPLOAD_DIR=/app/uploads
+      - MAX_FILE_SIZE=524288000
+      - BASE_URL=http://localhost:3004
+    depends_on:
+      - postgres
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./uploads:/app/uploads
+    command: npx nest start file-service --watch
     networks:
       - afronix-network
 

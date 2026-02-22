@@ -9,10 +9,10 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 
-@Entity('auth_sessions')
+@Entity('auth_refresh_tokens')
 @Index(['token'], { unique: true })
 @Index(['userId'])
-export class Session {
+export class RefreshToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -24,7 +24,7 @@ export class Session {
   user: User;
 
   @Column()
-  token: string;
+  token: string; // Hashed token
 
   @Column({ name: 'ip_address', nullable: true })
   ipAddress: string;
@@ -35,8 +35,11 @@ export class Session {
   @Column({ type: 'timestamp' })
   expiresAt: Date;
 
-  @Column({ default: true })
-  isValid: boolean;
+  @Column({ default: false })
+  revoked: boolean;
+
+  @Column({ nullable: true })
+  family: string; // For token rotation tracking
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

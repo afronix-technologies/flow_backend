@@ -36,4 +36,12 @@ export class RegisterDto {
   @IsNotEmpty()
   @MaxLength(100)
   organizationName: string;
+
+  @ApiProperty({ example: 'acme-corp', description: 'Organization slug (subdomain)' })
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
+  })
+  slug: string;
 }

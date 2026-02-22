@@ -13,7 +13,16 @@ export class EmailService {
 
   constructor() {
     // Initialize with environment variables or mock for now if not set
+    console.log('[SMTP DEBUG] Host:', process.env.SMTP_HOST);
+    console.log('[SMTP DEBUG] Port:', process.env.SMTP_PORT);
+    console.log('[SMTP DEBUG] User:', process.env.SMTP_USER);
+    console.log('[SMTP DEBUG] Pass length:', process.env.SMTP_PASS?.length);
+
+    console.log('[SMTP DEBUG] Pass first 4 chars:', process.env.SMTP_PASS?.substring(0, 4));
     if (process.env.SMTP_HOST) {
+      console.log(
+        `[EmailService] Configuring SMTP: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT} User: ${process.env.SMTP_USER}`,
+      );
       this.transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT || '587'),
@@ -22,6 +31,15 @@ export class EmailService {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
         },
+      });
+
+      // Verify connection
+      this.transporter.verify((error) => {
+        if (error) {
+          console.error('[EmailService] SMTP Connection Error:', error);
+        } else {
+          console.log('[EmailService] SMTP Server is ready to take our messages');
+        }
       });
     } else {
       this.logger.warn(
@@ -39,6 +57,7 @@ export class EmailService {
     }
 
     try {
+      console.log(`[EmailService] Attempting to send email to ${to}...`);
       await this.transporter.sendMail({
         from: process.env.FROM_EMAIL || 'no-reply@navix.com',
         to,
@@ -47,14 +66,14 @@ export class EmailService {
       });
       this.logger.log(`Email sent to ${to}`);
     } catch (error) {
+      console.error(`[EmailService] FAILED to send email to ${to}`, error);
       this.logger.error(`Failed to send email to ${to}`, error.stack);
       // Don't throw, just log
     }
   }
 
-  async sendVerificationEmail(email: string, token: string) {
-    const url = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
-    const html = verificationTemplate(url);
+  async sendVerificationEmail(email: string, code: string) {
+    const html = verificationTemplate(code);
     await this.sendMail(email, 'Verify your email for Flow', html);
   }
 

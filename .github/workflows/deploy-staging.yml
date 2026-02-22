@@ -26,6 +26,8 @@ jobs:
             port: 3002
           - name: job-service
             port: 3003
+          - name: file-service
+            port: 3004
     
     steps:
       - name: Checkout code
@@ -108,6 +110,9 @@ jobs:
           DATABASE_PASSWORD=${{ secrets.STAGING_DATABASE_PASSWORD }}
           DATABASE_NAME=flow_staging
           DATABASE_SSL=false
+
+          # Frontend
+          FRONTEND_URL=https://test-flow.afronix.com
           
           # Redis
           REDIS_HOST=redis
@@ -123,6 +128,7 @@ jobs:
           AUTH_SERVICE_PORT=3001
           NOTIFICATION_SERVICE_PORT=3002
           JOB_SERVICE_PORT=3003
+          FILE_SERVICE_PORT=3004
           
           # SMTP
           SMTP_HOST=${{ secrets.SMTP_HOST }}
@@ -140,16 +146,27 @@ jobs:
           MICROSOFT_CLIENT_SECRET=${{ secrets.MICROSOFT_CLIENT_SECRET }}
           MICROSOFT_CALLBACK_URL=${{ secrets.MICROSOFT_CALLBACK_URL }}
           MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_TENANT_ID }}
+
+          # Rate Limit 
+          THROTTLE_TTL=60000
+          THROTTLE_LIMIT=10000
           
-          # CORS
-          CORS_ORIGINS=https://api.staging.flow.afronix.com,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:4200,http://localhost:4201
+          # File Storage
+          UPLOAD_DIR=/srv/data/uploads
+          MAX_FILE_SIZE=524288000
+          
+          # CORS - Updated for wildcard subdomains
+          CORS_ORIGINS=https://*.staging.flow.afronix.com,https://staging.flow.afronix.com,https://staging.flow.afronix.com:8443,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:4200,http://localhost:4201,https://flowwithafronix.vercel.app,https://test-flow.afronix.com,http://johntech.localhost:4201,http://johntech.localhost:4200
           
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
           IMAGE_TAG=staging-latest
           
-          # Nginx
-          DOMAIN=api.staging.flow.afronix.com
+          # Nginx - Updated for wildcard subdomains
+          DOMAIN=staging.flow.afronix.com
+          BASE_URL=https://staging.flow.afronix.com:8443
+          NGINX_HTTP_PORT=8080
+          NGINX_HTTPS_PORT=8443
           EOF"
       
       - name: Deploy to staging
@@ -194,49 +211,16 @@ jobs:
           docker ps
           ENDSSH
       
-      - name: Setup SSL Certificate
-        continue-on-error: true
+      - name: Reload Nginx (Wildcard SSL)
         run: |
           ssh -i ~/.ssh/deployment_key \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
           cd /opt/flow-staging
           
-          # Check if valid SSL cert exists
-          if [ -f "nginx/ssl/live/api.staging.flow.afronix.com/README" ]; then
-            echo "✅ Valid SSL certificate already exists"
-            exit 0
-          fi
-          
-          echo "🔒 Setting up SSL certificate..."
-          
-          # Create dummy cert if none exists
-          if [ ! -d "nginx/ssl/live/api.staging.flow.afronix.com" ]; then
-            mkdir -p nginx/ssl/live/api.staging.flow.afronix.com
-            openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-              -keyout nginx/ssl/live/api.staging.flow.afronix.com/privkey.pem \
-              -out nginx/ssl/live/api.staging.flow.afronix.com/fullchain.pem \
-              -subj "/CN=localhost"
-          fi
-          
-          # Start nginx with dummy cert
+          # We assume Wildcard SSL is manually set up
+          echo "🔄 Reloading Nginx..."
           docker compose --env-file .env.staging -f docker-compose.prod.yml restart nginx
-          sleep 5
           
-          # Get real certificate
-          docker compose --env-file .env.staging -f docker-compose.prod.yml run --rm --entrypoint "\
-            certbot certonly --webroot -w /var/www/certbot \
-              --email admin@afronix.com \
-              --agree-tos \
-              --no-eff-email \
-              --force-renewal \
-              -d api.staging.flow.afronix.com" certbot || {
-            echo "⚠️ SSL setup failed, but continuing with self-signed cert"
-            exit 0
-          }
-          
-          # Reload nginx with real cert
-          docker compose --env-file .env.staging -f docker-compose.prod.yml restart nginx
-          echo "✅ SSL certificate installed"
           ENDSSH
       
       - name: Health check
@@ -253,7 +237,8 @@ jobs:
       - name: Deployment summary
         run: |
           echo "🎉 Staging deployment successful!"
-          echo "📍 URL: https://api.staging.flow.afronix.com"
+          echo "📍 Wildcard URL: https://*.staging.flow.afronix.com"
+          echo "📍 Base URL: https://staging.flow.afronix.com"
           echo "🏷️ Image tag: staging-${{ github.sha }}"
           echo "📝 Commit: ${{ github.event.head_commit.message }}"
 

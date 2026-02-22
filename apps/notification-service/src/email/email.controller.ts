@@ -18,12 +18,12 @@ export class EmailController {
   @ApiBody({
     schema: {
       type: 'object',
-      properties: { email: { type: 'string' }, token: { type: 'string' } },
+      properties: { email: { type: 'string' }, code: { type: 'string' } },
     },
   })
   @ApiResponse({ status: 201, description: 'Email sent' })
-  async sendVerificationEmail(@Body() body: { email: string; token: string }) {
-    await this.emailService.sendVerificationEmail(body.email, body.token);
+  async sendVerificationEmail(@Body() body: { email: string; code: string }) {
+    await this.emailService.sendVerificationEmail(body.email, body.code);
     return { message: 'Verification email sent' };
   }
 

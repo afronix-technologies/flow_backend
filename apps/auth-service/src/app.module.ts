@@ -6,6 +6,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { AppController } from './app.controller';
 import { databaseConfig } from './core/config/database.config';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisConfig } from './core/config/redis.config';
 
 @Module({
   imports: [
@@ -14,6 +16,10 @@ import { databaseConfig } from './core/config/database.config';
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
     TypeOrmModule.forRootAsync(databaseConfig),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      ...redisConfig,
+    }),
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 60 seconds

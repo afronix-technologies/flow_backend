@@ -1,6 +1,7 @@
 import { Controller, Get, Put, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { SessionGuard } from '../guards/session.guard';
+import { SubdomainGuard } from '../guards/subdomain.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { User } from '../entities/user.entity';
 import { UsersService } from '../services/users.service';
@@ -8,7 +9,7 @@ import { AuthService } from '../services/auth.service';
 
 @ApiTags('Auth')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionGuard, SubdomainGuard)
 @ApiBearerAuth()
 export class UsersController {
   constructor(
