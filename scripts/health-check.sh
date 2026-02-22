@@ -112,7 +112,7 @@ else
     FAILED=1
 fi
 
-# Check memory
+# Check memory!
 print_info "Checking memory..."
 MEM_AVAILABLE=$(free -m | awk 'NR==2 {print $7}')
 if [ "$MEM_AVAILABLE" -gt 500 ]; then
