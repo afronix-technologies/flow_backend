@@ -10,12 +10,23 @@ env:
   DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
 jobs:
+  # ─── Job 0: Single version tag shared across ALL matrix builds ───
+  generate-version:
+    name: Generate Version Tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Generate version
+        id: version
+        run: |
+          echo "version=staging-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "🏷️ Staging version: staging-${GITHUB_SHA::7}"
+
   build-and-push:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
-    
-    outputs:
-      image-tag: ${{ steps.meta.outputs.version }}
+    needs: generate-version
     
     strategy:
       matrix:
@@ -28,6 +39,8 @@ jobs:
             port: 3003
           - name: file-service
             port: 3004
+          - name: settings-service
+            port: 3005
     
     steps:
       - name: Checkout code
@@ -48,7 +61,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/flow-${{ matrix.service.name }}
           tags: |
-            type=raw,value=staging-{{sha}}
+            type=raw,value=staging-${{ github.sha }}
             type=raw,value=staging-latest
             type=ref,event=branch
       
@@ -68,12 +81,13 @@ jobs:
       
       - name: Image digest
         run: |
-          echo "Pushed image digest: ${{ steps.meta.outputs.digest }}"
+          echo "✅ Pushed: flow-${{ matrix.service.name }}"
+          echo "🏷️ Tag: staging-${{ github.sha }}"
 
   deploy-to-vps:
     name: Deploy to VPS Staging
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: [generate-version, build-and-push]
     # environment: staging
     
     steps:
@@ -129,6 +143,7 @@ jobs:
           NOTIFICATION_SERVICE_PORT=3002
           JOB_SERVICE_PORT=3003
           FILE_SERVICE_PORT=3004
+          SETTINGS_SERVICE_PORT=3005
           
           # SMTP
           SMTP_HOST=${{ secrets.SMTP_HOST }}
@@ -156,7 +171,7 @@ jobs:
           MAX_FILE_SIZE=524288000
           
           # CORS - Updated for wildcard subdomains
-          CORS_ORIGINS=https://*.staging.flow.afronix.com,https://staging.flow.afronix.com,https://staging.flow.afronix.com:8443,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:4200,http://localhost:4201,https://flowwithafronix.vercel.app,https://test-flow.afronix.com,http://johntech.localhost:4201,http://johntech.localhost:4200
+          CORS_ORIGINS=https://*.staging.flow.afronix.com,https://staging.flow.afronix.com,https://staging.flow.afronix.com:8443,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:4200,http://localhost:4201,https://flowwithafronix.vercel.app,https://test-flow.afronix.com,https://*.test-flow.afronix.com,http://johntech.localhost:4201,http://johntech.localhost:4200
           
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
