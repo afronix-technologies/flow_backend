@@ -6,6 +6,9 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { databaseConfig } from './core/config/database.config';
 import { SettingsModule } from './settings/settings.module';
+import { FeaturesModule } from './features/features.module';
+import { NavigationModule } from './navigation/navigation.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -21,6 +24,9 @@ import { SettingsModule } from './settings/settings.module';
       },
     ]),
     SettingsModule,
+    FeaturesModule,
+    NavigationModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [
