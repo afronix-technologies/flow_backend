@@ -49,4 +49,16 @@ export class NotificationsService {
       throw error; // Retry
     }
   }
+
+  @Process('workspace-updated')
+  async handleWorkspaceUpdated(job: Job) {
+    const { organizationId, packageKey, message } = job.data;
+    this.logger.debug(`Broadcasting workspace update for org: ${organizationId} → ${packageKey}`);
+
+    this.gateway.sendToOrganization(organizationId, {
+      type: 'WORKSPACE_UPDATED',
+      packageKey,
+      message,
+    });
+  }
 }
