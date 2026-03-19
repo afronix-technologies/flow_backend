@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NavigationItem } from './entities/navigation-item.entity';
@@ -8,6 +10,7 @@ import { FeaturesService } from '../features/features.service';
 interface NavNode {
   key: string;
   label: string;
+  icon?: string;
   route?: string;
   children?: NavNode[];
 }
@@ -22,6 +25,9 @@ export class NavigationService {
     private readonly overrideRepo: Repository<NavigationRoleOverride>,
 
     private readonly featuresService: FeaturesService,
+
+    @Inject(CACHE_MANAGER)
+    private readonly cache: Cache,
   ) {}
 
   async getSidebarNavigation(organizationId: string, role: string) {
@@ -31,8 +37,13 @@ export class NavigationService {
 
     const isAdmin = ['admin', 'owner'].includes(role);
 
-    // Step 2: Get the org's enabled features
-    const enabledFeatures = await this.featuresService.getEnabledFeatureKeys(organizationId);
+    // Step 2: Get the org's enabled features (cache-aside)
+    const cacheKey = `nav:features:${organizationId}`;
+    let enabledFeatures = await this.cache.get<Set<string>>(cacheKey);
+    if (!enabledFeatures) {
+      enabledFeatures = await this.featuresService.getEnabledFeatureKeys(organizationId);
+      await this.cache.set(cacheKey, enabledFeatures);
+    }
 
     // Step 3: Load and filter all nav items
     const allItems = await this.navItemRepo.find({ order: { sortOrder: 'ASC' } });
@@ -103,6 +114,7 @@ export class NavigationService {
       label: item.label,
     };
 
+    if (item.icon) node.icon = item.icon;
     if (item.route) node.route = item.route;
     if (children.length > 0) node.children = children;
 

@@ -28,7 +28,9 @@ export class FeaturesService {
       return {
         key: feature.key,
         name: feature.name,
+        description: feature.description ?? null,
         package: feature.package,
+        tier: feature.tier,
         enabled: orgEntry?.enabled ?? false,
         enabledAt: orgEntry?.enabledAt ?? null,
       };
@@ -68,46 +70,6 @@ export class FeaturesService {
       enabled,
       enabledAt: orgFeature.enabledAt,
       enabledBy: userId,
-    };
-  }
-
-  /**
-   * Bulk-enable all features from a package (called during onboarding).
-   * Workforce Management also includes all Project Management features.
-   */
-  async selectPackage(organizationId: string, packageName: string, userId: string) {
-    const packagesToEnable = [packageName];
-    if (packageName === 'workforce_management') {
-      packagesToEnable.push('project_management');
-    }
-
-    const features = await this.catalogRepo.find({
-      where: packagesToEnable.map((p) => ({ package: p })),
-    });
-
-    for (const feature of features) {
-      let orgFeature = await this.orgFeatureRepo.findOne({
-        where: { organizationId, featureKey: feature.key },
-      });
-
-      if (!orgFeature) {
-        orgFeature = this.orgFeatureRepo.create({
-          organizationId,
-          featureKey: feature.key,
-        });
-      }
-
-      orgFeature.enabled = true;
-      orgFeature.enabledAt = new Date();
-      orgFeature.enabledBy = userId;
-
-      await this.orgFeatureRepo.save(orgFeature);
-    }
-
-    return {
-      package: packageName,
-      featuresEnabled: features.length,
-      features: features.map((f) => f.key),
     };
   }
 

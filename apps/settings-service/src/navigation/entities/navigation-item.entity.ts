@@ -13,6 +13,9 @@ export class NavigationItem {
   label: string;
 
   @Column({ nullable: true })
+  icon: string;
+
+  @Column({ nullable: true })
   parentKey: string;
 
   @Column({ nullable: true })

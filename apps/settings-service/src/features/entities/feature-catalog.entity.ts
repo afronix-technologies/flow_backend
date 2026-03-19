@@ -20,6 +20,9 @@ export class FeatureCatalog {
   @Column({ default: 'standard' })
   tier: string; // 'standard' | 'professional'
 
+  @Column({ default: true })
+  isDefault: boolean; // auto-enabled when package is selected
+
   @CreateDateColumn()
   createdAt: Date;
 }

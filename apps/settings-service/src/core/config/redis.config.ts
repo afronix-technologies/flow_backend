@@ -1,0 +1,17 @@
+import { CacheModuleAsyncOptions } from '@nestjs/cache-manager';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { redisStore } = require('cache-manager-redis-yet');
+
+export const redisConfig: CacheModuleAsyncOptions = {
+  imports: [ConfigModule],
+  inject: [ConfigService],
+  useFactory: async (configService: ConfigService) => ({
+    store: redisStore,
+    socket: {
+      host: configService.get<string>('REDIS_HOST'),
+      port: configService.get<number>('REDIS_PORT'),
+    },
+    ttl: 300, // 5 minutes for nav cache
+  }),
+};

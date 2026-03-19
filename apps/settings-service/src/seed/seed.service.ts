@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { FeatureCatalog } from '../features/entities/feature-catalog.entity';
 import { NavigationItem } from '../navigation/entities/navigation-item.entity';
 import { NavigationRoleOverride } from '../navigation/entities/navigation-role-override.entity';
+import { WorkspacePackage } from '../workspace/entities/workspace-package.entity';
 
 @Injectable()
 export class SeedService implements OnModuleInit {
@@ -18,12 +19,80 @@ export class SeedService implements OnModuleInit {
 
     @InjectRepository(NavigationRoleOverride)
     private readonly overrideRepo: Repository<NavigationRoleOverride>,
+
+    @InjectRepository(WorkspacePackage)
+    private readonly workspacePackageRepo: Repository<WorkspacePackage>,
   ) {}
 
   async onModuleInit() {
+    await this.seedWorkspacePackages();
     await this.seedFeatureCatalog();
     await this.seedNavigationItems();
     await this.seedRoleOverrides();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Workspace Packages
+  // ---------------------------------------------------------------------------
+
+  private async seedWorkspacePackages() {
+    const count = await this.workspacePackageRepo.count();
+    if (count > 0) return;
+
+    this.logger.log('Seeding workspace_packages...');
+
+    const packages: Partial<WorkspacePackage>[] = [
+      {
+        key: 'time-tracking',
+        title: 'Time Tracking',
+        badge: 'Standard',
+        recommended: false,
+        description: 'Simple time tracking for accurate payroll and project billing.',
+        perfectFor: ['Freelancers', 'Small Teams'],
+        baseFeatures: [
+          'Start/Stop Timer',
+          'Manual Time Entry',
+          'Basic Project Assignment',
+          'Weekly/Monthly Reports',
+        ],
+        actionText: 'Select Time Tracking',
+      },
+      {
+        key: 'project-management',
+        title: 'Project Management',
+        badge: 'Professional',
+        recommended: true,
+        description: 'Full project and task management with time tracking and team collaboration.',
+        perfectFor: ['Growing Teams', 'Project-Based Businesses'],
+        baseFeatures: [
+          'Full Time Tracking',
+          'Project & Task Management',
+          'Deadlines & Priorities',
+          'Performance Insights',
+          'Team Collaboration',
+        ],
+        actionText: 'Select Project Management',
+      },
+      {
+        key: 'workforce',
+        title: 'Workforce Management',
+        badge: 'Professional',
+        recommended: false,
+        description: 'Complete workforce management with attendance, leave, and shift scheduling.',
+        perfectFor: ['Large Teams', 'HR Departments', 'Enterprises'],
+        baseFeatures: [
+          'Everything in Project Management',
+          'Mandatory Clock In/Out',
+          'Attendance Tracking',
+          'Leave Management',
+          'Shift Scheduling',
+        ],
+        actionText: 'Select Workforce Management',
+      },
+    ];
+
+    await this.workspacePackageRepo.save(packages.map((p) => this.workspacePackageRepo.create(p)));
+    this.logger.log(`Seeded ${packages.length} workspace packages.`);
   }
 
   // ---------------------------------------------------------------------------
@@ -41,84 +110,97 @@ export class SeedService implements OnModuleInit {
       {
         key: 'start_stop_timer',
         name: 'Start/Stop Timer',
-        package: 'time_tracking',
+        package: 'time-tracking',
         description: 'Track time with a start/stop timer',
+        isDefault: true,
       },
       {
         key: 'manual_time_entry',
         name: 'Manual Time Entry',
-        package: 'time_tracking',
+        package: 'time-tracking',
         description: 'Add time entries manually',
+        isDefault: true,
       },
       {
         key: 'basic_project_assignment',
         name: 'Basic Project Assignment',
-        package: 'time_tracking',
+        package: 'time-tracking',
         description: 'Assign time to projects',
+        isDefault: true,
       },
       {
         key: 'weekly_monthly_reports',
         name: 'Weekly/Monthly Reports',
-        package: 'time_tracking',
+        package: 'time-tracking',
         description: 'Generate weekly and monthly time reports',
+        isDefault: true,
       },
 
       // Project Management package
       {
         key: 'full_time_tracking',
         name: 'Full Time Tracking',
-        package: 'project_management',
+        package: 'project-management',
         description: 'Complete time tracking suite',
+        isDefault: true,
       },
       {
         key: 'project_task_management',
         name: 'Project & Task Management',
-        package: 'project_management',
+        package: 'project-management',
         description: 'Manage projects and tasks',
+        isDefault: true,
       },
       {
         key: 'deadlines_priorities',
         name: 'Deadlines & Priorities',
-        package: 'project_management',
+        package: 'project-management',
         description: 'Set deadlines and task priorities',
+        isDefault: true,
       },
       {
         key: 'performance_insights',
         name: 'Performance Insights',
-        package: 'project_management',
+        package: 'project-management',
         description: 'Analytics and performance reports',
+        isDefault: true,
       },
       {
         key: 'team_collaboration',
         name: 'Team Collaboration',
-        package: 'project_management',
+        package: 'project-management',
         description: 'Collaborate across teams',
+        isDefault: true,
       },
 
       // Workforce Management package
       {
         key: 'mandatory_clock_in_out',
         name: 'Mandatory Clock In/Out',
-        package: 'workforce_management',
+        package: 'workforce',
         description: 'Require employees to clock in and out',
+        isDefault: true,
       },
       {
         key: 'attendance_tracking',
         name: 'Attendance Tracking',
-        package: 'workforce_management',
+        package: 'workforce',
         description: 'Track employee attendance',
+        isDefault: true,
       },
       {
         key: 'leave_management',
         name: 'Leave Management',
-        package: 'workforce_management',
+        package: 'workforce',
         description: 'Manage employee leave requests',
+        isDefault: true,
       },
       {
         key: 'shift_scheduling',
         name: 'Shift Scheduling',
-        package: 'workforce_management',
+        package: 'workforce',
         description: 'Schedule employee shifts',
+        isDefault: true,
       },
     ];
 
@@ -136,18 +218,12 @@ export class SeedService implements OnModuleInit {
 
     this.logger.log('Seeding navigation_items...');
 
-    /**
-     * requiredFeatures: item is shown if ANY of these features is enabled.
-     * An empty array means always visible.
-     *
-     * Note: group items (like time-tracking) list ALL features that can make them visible.
-     * e.g. time-tracking is visible if start_stop_timer OR full_time_tracking is enabled.
-     */
     const items: Partial<NavigationItem>[] = [
       // ── Top level ──────────────────────────────────────────────────────────
       {
         key: 'dashboard',
         label: 'Dashboard',
+        icon: 'pi-home',
         parentKey: null,
         route: '/dashboard',
         sortOrder: 1,
@@ -157,6 +233,7 @@ export class SeedService implements OnModuleInit {
       {
         key: 'teams',
         label: 'Teams',
+        icon: 'pi-users',
         parentKey: null,
         route: null,
         sortOrder: 2,
@@ -166,6 +243,7 @@ export class SeedService implements OnModuleInit {
       {
         key: 'projects',
         label: 'Projects',
+        icon: 'pi-briefcase',
         parentKey: null,
         route: '/dashboard/projects',
         sortOrder: 3,
@@ -175,6 +253,7 @@ export class SeedService implements OnModuleInit {
       {
         key: 'reports',
         label: 'Reports',
+        icon: 'pi-chart-bar',
         parentKey: null,
         route: '/dashboard/reports',
         sortOrder: 4,
@@ -184,6 +263,7 @@ export class SeedService implements OnModuleInit {
       {
         key: 'time-tracking',
         label: 'Time Tracking',
+        icon: 'pi-clock',
         parentKey: null,
         route: '/dashboard/time-tracking',
         sortOrder: 5,
@@ -199,6 +279,7 @@ export class SeedService implements OnModuleInit {
       {
         key: 'payroll',
         label: 'Payroll',
+        icon: 'pi-wallet',
         parentKey: null,
         route: '/dashboard/payroll',
         sortOrder: 6,
@@ -208,6 +289,7 @@ export class SeedService implements OnModuleInit {
       {
         key: 'notifications',
         label: 'Notifications',
+        icon: 'pi-bell',
         parentKey: null,
         route: '/dashboard/notifications',
         sortOrder: 7,
@@ -217,6 +299,7 @@ export class SeedService implements OnModuleInit {
       {
         key: 'settings',
         label: 'Settings',
+        icon: 'pi-cog',
         parentKey: null,
         route: null,
         sortOrder: 8,
@@ -226,6 +309,7 @@ export class SeedService implements OnModuleInit {
       {
         key: 'sync',
         label: 'Sync',
+        icon: 'pi-sync',
         parentKey: null,
         route: '/dashboard/sync',
         sortOrder: 9,
@@ -439,18 +523,13 @@ export class SeedService implements OnModuleInit {
     this.logger.log('Seeding navigation_role_overrides...');
 
     const overrides: Partial<NavigationRoleOverride>[] = [
-      // task-management: admin sees "Task Management", member sees "My Tasks"
       {
         navigationKey: 'task-management',
         role: 'member',
         labelOverride: 'My Tasks',
         hidden: false,
       },
-
-      // leave: member sees "Leave Requests"
       { navigationKey: 'leave', role: 'member', labelOverride: 'Leave Requests', hidden: false },
-
-      // settings-general: member sees "Profile"
       {
         navigationKey: 'settings-general',
         role: 'member',
