@@ -42,7 +42,9 @@ jobs:
             port: 3004
           - name: settings-service
             port: 3005
-    
+          - name: admin-service
+            port: 3006
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -174,6 +176,15 @@ jobs:
           THROTTLE_TTL=60
           THROTTLE_LIMIT=1000
           
+          # Admin Panel
+          ADMIN_SERVICE_PORT=3006
+          ADMIN_COOKIE_SECRET=${{ secrets.ADMIN_COOKIE_SECRET }}
+          ADMIN_SESSION_SECRET=${{ secrets.ADMIN_SESSION_SECRET }}
+          SUPERADMIN_EMAIL=${{ secrets.SUPERADMIN_EMAIL }}
+          SUPERADMIN_PASSWORD=${{ secrets.SUPERADMIN_PASSWORD }}
+          SUPERADMIN_FIRST_NAME=Afronix
+          SUPERADMIN_LAST_NAME=Admin
+
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
           IMAGE_TAG=${{ needs.generate-version.outputs.version }}
