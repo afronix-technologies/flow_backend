@@ -45,6 +45,8 @@ Never change the authenticate function to allow any other role.
 - `BreakPolicyEntity` (work_policies_break)
 - `OvertimePolicyEntity` (work_policies_overtime)
 - `OrgHolidayEntity` (work_policies_holidays)
+- `DepartmentEntity` (team_departments)
+- `TeamMemberEntity` (team_members)
 
 **File Service:**
 - `FileEntity`

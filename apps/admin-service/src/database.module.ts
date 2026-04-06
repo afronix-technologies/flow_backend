@@ -29,6 +29,10 @@ import { BreakPolicy } from '../../settings-service/src/work-policies/entities/b
 import { OvertimePolicy } from '../../settings-service/src/work-policies/entities/overtime-policy.entity';
 import { OrgHoliday } from '../../settings-service/src/work-policies/entities/org-holiday.entity';
 
+// ── Team Service Entities ─────────────────────────────────────────────────────
+import { Department } from '../../settings-service/src/departments/entities/department.entity';
+import { TeamMember } from '../../settings-service/src/members/entities/team-member.entity';
+
 // ── File Service Entities ─────────────────────────────────────────────────────
 import { File } from '../../file-service/src/files/entities/file.entity';
 
@@ -54,6 +58,8 @@ export const ALL_ENTITIES = [
   BreakPolicy,
   OvertimePolicy,
   OrgHoliday,
+  Department,
+  TeamMember,
   File,
 ];
 

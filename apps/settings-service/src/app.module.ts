@@ -14,6 +14,8 @@ import { NavigationModule } from './navigation/navigation.module';
 import { WorkspaceModule } from './workspace/workspace.module';
 import { SeedModule } from './seed/seed.module';
 import { WorkPoliciesModule } from './work-policies/work-policies.module';
+import { DepartmentsModule } from './departments/departments.module';
+import { MembersModule } from './members/members.module';
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { WorkPoliciesModule } from './work-policies/work-policies.module';
     WorkspaceModule,
     SeedModule,
     WorkPoliciesModule,
+    DepartmentsModule,
+    MembersModule,
   ],
   controllers: [AppController],
   providers: [
