@@ -1,19 +1,21 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Department, DepartmentStatus } from './entities/department.entity';
+import { Department } from './entities/department.entity';
 import { TeamMember } from '../members/entities/team-member.entity';
-import { User } from '../../auth-service/src/auth/entities/user.entity';
+import { User } from '../../../auth-service/src/auth/entities/user.entity';
 import { CreateDepartmentDto } from './dto/create-department.dto';
 import { UpdateDepartmentStatusDto } from './dto/update-department-status.dto';
 
 const AVATAR_COLORS = [
-  '#2563eb', '#0ea5e9', '#8b5cf6', '#f97316',
-  '#10b981', '#ef4444', '#f59e0b', '#ec4899',
+  '#2563eb',
+  '#0ea5e9',
+  '#8b5cf6',
+  '#f97316',
+  '#10b981',
+  '#ef4444',
+  '#f59e0b',
+  '#ec4899',
 ];
 
 function avatarColor(seed: string): string {
@@ -102,7 +104,9 @@ export class DepartmentsService {
 
     const existing = await this.deptRepo.findOne({ where: { organizationId, name: dto.name } });
     if (existing) {
-      throw new ConflictException(`A department named "${dto.name}" already exists in this organization`);
+      throw new ConflictException(
+        `A department named "${dto.name}" already exists in this organization`,
+      );
     }
 
     const dept = this.deptRepo.create({

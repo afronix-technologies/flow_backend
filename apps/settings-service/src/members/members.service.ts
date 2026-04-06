@@ -11,8 +11,14 @@ import { Department } from '../departments/entities/department.entity';
 import { CreateTeamMemberDto } from './dto/create-team-member.dto';
 
 const AVATAR_COLORS = [
-  '#2563eb', '#0ea5e9', '#8b5cf6', '#f97316',
-  '#10b981', '#ef4444', '#f59e0b', '#ec4899',
+  '#2563eb',
+  '#0ea5e9',
+  '#8b5cf6',
+  '#f97316',
+  '#10b981',
+  '#ef4444',
+  '#f59e0b',
+  '#ec4899',
 ];
 
 function avatarColor(seed: string): string {
@@ -64,7 +70,9 @@ export class MembersService {
       where: { organizationId, email: dto.email },
     });
     if (existing) {
-      throw new ConflictException(`A member with email "${dto.email}" already exists in this organization`);
+      throw new ConflictException(
+        `A member with email "${dto.email}" already exists in this organization`,
+      );
     }
 
     if (dto.departmentId) {
@@ -72,7 +80,9 @@ export class MembersService {
         where: { id: dto.departmentId, organizationId },
       });
       if (!dept) {
-        throw new BadRequestException(`Department "${dto.departmentId}" not found in this organization`);
+        throw new BadRequestException(
+          `Department "${dto.departmentId}" not found in this organization`,
+        );
       }
     }
 

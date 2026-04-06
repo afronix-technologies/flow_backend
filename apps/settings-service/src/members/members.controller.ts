@@ -8,13 +8,7 @@ import {
   UseGuards,
   ForbiddenException,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { CreateTeamMemberDto } from './dto/create-team-member.dto';
 import { JwtAuthGuard } from '../settings/guards/jwt-auth.guard';
