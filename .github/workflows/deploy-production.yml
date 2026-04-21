@@ -226,39 +226,28 @@ jobs:
           
           echo "🛑 Freeing up ports..."
 
-          # Nuclear option - stop everything
+          # Stop and remove all containers
           docker stop $(docker ps -aq) 2>/dev/null || true
           docker rm $(docker ps -aq) 2>/dev/null || true
 
-          # Kill system nginx
+          # Remove unused networks (fixes "network already exists" on re-deploy)
+          docker network prune -f 2>/dev/null || true
+
+          # Kill system nginx and free ports
           sudo killall -9 nginx 2>/dev/null || true
-          sudo fuser -k -9 80/tcp 2>/dev/null || true  
+          sudo fuser -k -9 80/tcp 2>/dev/null || true
           sudo fuser -k -9 443/tcp 2>/dev/null || true
 
           # Wait for ports to free
           sleep 5
 
           echo "✅ Ports cleared"
-          
-          docker compose -f docker-compose.prod.yml pull
-          
-          echo "🔄 Performing zero-downtime deployment..."
-          
-          # Scale up new containers
-          docker compose --env-file .env.production -f docker-compose.prod.yml up -d --scale auth-service=2 --no-recreate
-          sleep 10
-          
-          # Health check new containers
-          docker compose exec -T auth-service curl -f http://localhost:3001/api/v1/health || {
-            echo "❌ Health check failed, rolling back..."
-            docker compose --env-file .env.production -f docker-compose.prod.yml down
-            exit 1
-          }
-          
-          # Stop old containers
+
+          docker compose --env-file .env.production -f docker-compose.prod.yml pull
+
           echo "🔄 Stopping old containers..."
-          docker compose -f docker-compose.prod.yml down || true
-          
+          docker compose --env-file .env.production -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+
           # Start fresh with new containers
           echo "🚀 Starting production containers..."
           docker compose --env-file .env.production -f docker-compose.prod.yml up -d
