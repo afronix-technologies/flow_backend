@@ -36,6 +36,10 @@ import { TeamMember } from '../../settings-service/src/members/entities/team-mem
 // ── File Service Entities ─────────────────────────────────────────────────────
 import { File } from '../../file-service/src/files/entities/file.entity';
 
+// ── API Service Entities ──────────────────────────────────────────────────────
+import { Project } from '../../api/src/modules/projects/entities/project.entity';
+import { ProjectTask } from '../../api/src/modules/projects/entities/project-task.entity';
+
 export const ALL_ENTITIES = [
   User,
   Organization,
@@ -61,6 +65,8 @@ export const ALL_ENTITIES = [
   Department,
   TeamMember,
   File,
+  Project,
+  ProjectTask,
 ];
 
 @Module({

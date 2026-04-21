@@ -51,6 +51,10 @@ Never change the authenticate function to allow any other role.
 **File Service:**
 - `FileEntity`
 
+**API Service:**
+- `Project` (projects)
+- `ProjectTask` (project_tasks)
+
 ---
 
 ## General Rules
