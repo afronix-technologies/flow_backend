@@ -230,8 +230,8 @@ jobs:
           docker stop $(docker ps -aq) 2>/dev/null || true
           docker rm $(docker ps -aq) 2>/dev/null || true
 
-          # Remove unused networks (fixes "network already exists" on re-deploy)
-          docker network prune -f 2>/dev/null || true
+          # Remove only this project's network (scoped, not global prune)
+          docker network rm flow_afronix-network 2>/dev/null || true
 
           # Kill system nginx and free ports
           sudo killall -9 nginx 2>/dev/null || true
