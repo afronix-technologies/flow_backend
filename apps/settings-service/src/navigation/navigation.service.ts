@@ -38,22 +38,27 @@ export class NavigationService {
     const isAdmin = ['admin', 'owner'].includes(role);
 
     // Step 2: Get the org's enabled features (cache-aside)
+    // Store as array because cache serializes to JSON — Set is not preserved across cache reads
     const cacheKey = `nav:features:${organizationId}`;
-    let enabledFeatures = await this.cache.get<Set<string>>(cacheKey);
-    if (!enabledFeatures) {
+    const cachedFeatures = await this.cache.get<string[]>(cacheKey);
+    let enabledFeatures: Set<string>;
+    if (cachedFeatures) {
+      enabledFeatures = new Set(cachedFeatures);
+    } else {
       enabledFeatures = await this.featuresService.getEnabledFeatureKeys(organizationId);
-      await this.cache.set(cacheKey, enabledFeatures);
+      await this.cache.set(cacheKey, [...enabledFeatures]);
     }
 
     // Step 3: Load and filter all nav items
     const allItems = await this.navItemRepo.find({ order: { sortOrder: 'ASC' } });
 
     const visible = allItems.filter((item) => {
+      // Normalize: TypeORM simple-array stores [] as '' in DB, reads back as ['']
+      const requiredFeatures = (item.requiredFeatures || []).filter((f) => f.trim() !== '');
+
       // Feature check: item is visible if no feature is required, or ANY required feature is enabled
       const featureOk =
-        !item.requiredFeatures ||
-        item.requiredFeatures.length === 0 ||
-        item.requiredFeatures.some((f) => enabledFeatures.has(f));
+        requiredFeatures.length === 0 || requiredFeatures.some((f) => enabledFeatures.has(f));
 
       // Role check: admin-only items hidden from non-admins
       const roleOk = !item.adminOnly || isAdmin;

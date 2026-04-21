@@ -5,7 +5,7 @@
 # Verifies all services are running correctly
 #############################################
 
-set -e
+# No set -e — each check reports and continues so we get a full picture on failure
 
 # Colors
 RED='\033[0;31m'
@@ -99,6 +99,16 @@ if [ "$SETTINGS_RESPONSE" = "200" ]; then
     print_success "Settings Service is healthy (HTTP 200)"
 else
     print_error "Settings Service is not responding (HTTP $SETTINGS_RESPONSE)"
+    FAILED=1
+fi
+
+# Check API Service
+print_info "Checking API Service (projects/tasks)..."
+API_RESPONSE=$(docker exec api curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/v1/health 2>/dev/null || echo "000")
+if [ "$API_RESPONSE" = "200" ]; then
+    print_success "API Service is healthy (HTTP 200)"
+else
+    print_error "API Service is not responding (HTTP $API_RESPONSE)"
     FAILED=1
 fi
 

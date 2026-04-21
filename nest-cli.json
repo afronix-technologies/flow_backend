@@ -56,11 +56,11 @@
         },
         "api": {
             "type": "application",
-            "root": ".",
+            "root": "apps/api",
             "entryFile": "main",
-            "sourceRoot": "src",
+            "sourceRoot": "apps/api/src",
             "compilerOptions": {
-                "tsConfigPath": "tsconfig.json"
+                "tsConfigPath": "apps/api/tsconfig.app.json"
             }
         },
         "admin-service": {

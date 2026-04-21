@@ -81,6 +81,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - NOTIFICATION_SERVICE_URL=http://notification-service:3002
+      - API_SERVICE_URL=http://api:3000
       - CORS_ORIGINS=${CORS_ORIGINS}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
@@ -96,6 +97,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      api:
         condition: service_healthy
     networks:
       - afronix-network
@@ -247,6 +250,49 @@ services:
         max-size: '10m'
         max-file: '3'
 
+  # API Service (core product — projects, tasks, etc.)
+  api:
+    image: ${DOCKER_REGISTRY}/flow-api:${IMAGE_TAG:-production-latest}
+    container_name: api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - API_PORT=3000
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_SSL=${DATABASE_SSL:-false}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-7d}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - afronix-network
+    volumes:
+      - /var/log/applications/flow:/app/logs
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/v1/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # Settings Service
   settings-service:
     image: ${DOCKER_REGISTRY}/flow-settings-service:${IMAGE_TAG:-production-latest}
@@ -375,6 +421,7 @@ services:
       - file-service
       - settings-service
       - admin-service
+      - api
     networks:
       - afronix-network
     healthcheck:

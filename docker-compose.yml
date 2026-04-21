@@ -57,9 +57,12 @@ services:
       - FRONTEND_URL=${FRONTEND_URL}
       - THROTTLE_LIMIT=${THROTTLE_LIMIT:-5}
       - THROTTLE_TTL=${THROTTLE_TTL:-60000}
+      - API_SERVICE_URL=http://api:3000
     depends_on:
       postgres:
         condition: service_healthy
+      api:
+        condition: service_started
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
@@ -127,6 +130,33 @@ services:
       - /usr/src/app/node_modules
       - ./uploads:/app/uploads
     command: npx nest start file-service --watch
+    networks:
+      - afronix-network
+
+  # API Service (core product — projects, tasks, etc.)
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - API_PORT=3000
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-7d}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:4200,http://localhost:4201}
+    depends_on:
+      - postgres
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npx nest start api --watch
     networks:
       - afronix-network
 

@@ -5,6 +5,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -31,9 +32,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { SessionService } from './session.service';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -123,6 +127,12 @@ export class AuthService {
     // Emit Welcome Socket Message (Client needs to join room 'user.id' first via 'joinRoom' event)
     // Delay slightly or ensure client connection flow
     this.authGateway.sendWelcomeMessage(savedUser.id, `Welcome to Flow, ${savedUser.firstName}!`);
+
+    // Fire-and-forget: seed default projects for the new org
+    const apiUrl = this.configService.get<string>('API_SERVICE_URL', 'http://api:3000');
+    axios
+      .post(`${apiUrl}/api/v1/internal/organizations/${savedOrg.id}/seed-projects`)
+      .catch((err) => this.logger.warn(`Failed to seed default projects: ${err.message}`));
 
     return { message: 'Check your email to verify your account' };
   }
