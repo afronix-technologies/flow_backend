@@ -6,7 +6,9 @@
       "Bash(git add *)",
       "Bash(git rebase *)",
       "Bash(GIT_EDITOR=true git rebase --continue)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(curl -s -X POST https://test-flow.afronix.com/api/v1/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"johnossai20@gmail.com\",\"password\":\"John-2001$\"}')",
+      "Bash(curl -s -X POST https://staging.flow.afronix.com:8443/api/v1/auth/login -H 'Content-Type: application/json' --data-raw '{\"email\":\"johnossai20@gmail.com\",\"password\":\"John-2001$\"}')"
     ]
   }
 }
