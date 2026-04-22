@@ -29,6 +29,9 @@ class OrganizationResponse {
 
   @ApiProperty()
   onboardingStep: string;
+
+  @ApiProperty({ required: false, nullable: true })
+  packageKey: string | null;
 }
 
 export class AuthResponseDto {
