@@ -35,13 +35,14 @@ async function bootstrap() {
 
   const swaggerUser = process.env.SWAGGER_USER;
   const swaggerPassword = process.env.SWAGGER_PASSWORD;
-  if (!swaggerUser || !swaggerPassword) {
-    throw new Error('SWAGGER_USER and SWAGGER_PASSWORD must be set in environment variables');
+  if (swaggerUser && swaggerPassword) {
+    app.use(
+      ['/api/docs', '/api/docs-json'],
+      basicAuth({ users: { [swaggerUser]: swaggerPassword }, challenge: true }),
+    );
+  } else {
+    console.warn('WARNING: SWAGGER_USER/SWAGGER_PASSWORD not set — Swagger is unprotected');
   }
-  app.use(
-    ['/api/docs', '/api/docs-json'],
-    basicAuth({ users: { [swaggerUser]: swaggerPassword }, challenge: true }),
-  );
 
   // Swagger Configuration
   const config = new DocumentBuilder()
