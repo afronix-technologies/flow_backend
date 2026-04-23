@@ -26,14 +26,14 @@ async function bootstrap() {
     }),
   );
 
+  const swaggerUser = process.env.SWAGGER_USER;
+  const swaggerPassword = process.env.SWAGGER_PASSWORD;
+  if (!swaggerUser || !swaggerPassword) {
+    throw new Error('SWAGGER_USER and SWAGGER_PASSWORD must be set in environment variables');
+  }
   app.use(
     ['/api/docs/settings', '/api/docs/settings-json'],
-    basicAuth({
-      users: {
-        [process.env.SWAGGER_USER || 'admin']: process.env.SWAGGER_PASSWORD || '',
-      },
-      challenge: true,
-    }),
+    basicAuth({ users: { [swaggerUser]: swaggerPassword }, challenge: true }),
   );
 
   const config = new DocumentBuilder()
