@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 
 import { sharedCorsConfig } from '@app/common';
+import * as basicAuth from 'express-basic-auth';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -29,6 +30,14 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+    }),
+  );
+
+  app.use(
+    ['/api/docs', '/api/docs-json'],
+    basicAuth({
+      users: { [process.env.SWAGGER_USER || 'admin']: process.env.SWAGGER_PASSWORD || '' },
+      challenge: true,
     }),
   );
 

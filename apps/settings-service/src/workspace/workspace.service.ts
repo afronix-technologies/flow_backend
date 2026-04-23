@@ -71,7 +71,7 @@ export class WorkspaceService {
     const featurePackageMap: Record<string, string[]> = {
       'time-tracking': ['time_tracking'],
       'project-management': ['project_management'],
-      'workforce': ['workforce_management', 'project_management'],
+      workforce: ['workforce_management', 'project_management'],
     };
     const featurePackages = featurePackageMap[packageKey] ?? [packageKey];
 

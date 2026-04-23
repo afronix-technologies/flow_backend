@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { sharedCorsConfig } from '@app/common';
+import * as basicAuth from 'express-basic-auth';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +23,16 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+    }),
+  );
+
+  app.use(
+    ['/api/docs/settings', '/api/docs/settings-json'],
+    basicAuth({
+      users: {
+        [process.env.SWAGGER_USER || 'admin']: process.env.SWAGGER_PASSWORD || '',
+      },
+      challenge: true,
     }),
   );
 

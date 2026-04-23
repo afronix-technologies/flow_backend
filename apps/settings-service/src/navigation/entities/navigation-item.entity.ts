@@ -34,4 +34,7 @@ export class NavigationItem {
 
   @Column({ default: false })
   adminOnly: boolean;
+
+  @Column({ default: true })
+  isActive: boolean;
 }
