@@ -5,6 +5,8 @@ import * as handlebars from 'handlebars';
 import { verificationTemplate } from './templates/verification.template';
 import { passwordResetTemplate } from './templates/password-reset.template';
 import { welcomeTemplate } from './templates/welcome.template';
+import { dataExportReadyTemplate } from './templates/data-export-ready.template';
+import { deletionConfirmationTemplate } from './templates/deletion-confirmation.template';
 
 @Injectable()
 export class EmailService {
@@ -116,5 +118,16 @@ export class EmailService {
     const dashboardUrl = `${process.env.FRONTEND_URL}/dashboard`;
     const html = welcomeTemplate(firstName, dashboardUrl);
     await this.sendMail(email, 'Welcome to Flow', html);
+  }
+
+  async sendDataExportReadyEmail(email: string, downloadUrl: string) {
+    const html = dataExportReadyTemplate(downloadUrl, 24);
+    await this.sendMail(email, 'Your Flow data export is ready', html);
+  }
+
+  async sendDeletionConfirmationEmail(email: string, token: string) {
+    const confirmationUrl = `${process.env.FRONTEND_URL}/confirm-deletion?token=${token}`;
+    const html = deletionConfirmationTemplate(confirmationUrl, 7);
+    await this.sendMail(email, 'Confirm your Flow data deletion request', html);
   }
 }

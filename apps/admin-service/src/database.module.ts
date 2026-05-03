@@ -39,6 +39,12 @@ import { File } from '../../file-service/src/files/entities/file.entity';
 // ── API Service Entities ──────────────────────────────────────────────────────
 import { Project } from '../../api/src/modules/projects/entities/project.entity';
 import { ProjectTask } from '../../api/src/modules/projects/entities/project-task.entity';
+import { AuditLog } from '../../api/src/modules/audit-logs/entities/audit-log.entity';
+import { DataExportRequest } from '../../api/src/modules/privacy/entities/data-export-request.entity';
+import { DataDeletionRequest } from '../../api/src/modules/privacy/entities/data-deletion-request.entity';
+import { ThirdPartyIntegration } from '../../api/src/modules/privacy/entities/third-party-integration.entity';
+import { DataAccessLog } from '../../api/src/modules/privacy/entities/data-access-log.entity';
+import { UserConsent } from '../../api/src/modules/privacy/entities/user-consent.entity';
 
 export const ALL_ENTITIES = [
   User,
@@ -67,6 +73,12 @@ export const ALL_ENTITIES = [
   File,
   Project,
   ProjectTask,
+  AuditLog,
+  DataExportRequest,
+  DataDeletionRequest,
+  ThirdPartyIntegration,
+  DataAccessLog,
+  UserConsent,
 ];
 
 @Module({
