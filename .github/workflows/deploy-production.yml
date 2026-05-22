@@ -163,12 +163,12 @@ jobs:
           # Google OAuth
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+          GOOGLE_CALLBACK_URL=https://apiflow.afronix.com/api/v1/auth/google/callback
 
           # Microsoft OAuth
           MICROSOFT_CLIENT_ID=${{ secrets.MICROSOFT_CLIENT_ID }}
           MICROSOFT_CLIENT_SECRET=${{ secrets.MICROSOFT_CLIENT_SECRET }}
-          MICROSOFT_CALLBACK_URL=${{ secrets.MICROSOFT_CALLBACK_URL }}
+          MICROSOFT_CALLBACK_URL=https://apiflow.afronix.com/api/v1/auth/microsoft/callback
           MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_TENANT_ID }}
           
           # File Storage
@@ -176,7 +176,7 @@ jobs:
           MAX_FILE_SIZE=524288000
           
           # Security - Updated for wildcard subdomains
-          CORS_ORIGINS=https://*.flow.afronix.com,https://flow.afronix.com,https://flow.afronix.com:8443,https://app.afronix.com,https://flowwithafronix.vercel.app
+          CORS_ORIGINS=https://*.apiflow.afronix.com,https://apiflow.afronix.com,https://app.afronix.com,https://flowwithafronix.vercel.app
           THROTTLE_TTL=60
           THROTTLE_LIMIT=1000
           
@@ -194,7 +194,8 @@ jobs:
           IMAGE_TAG=${{ needs.generate-version.outputs.version }}
           
           # Nginx - Updated for wildcard subdomains
-          DOMAIN=flow.afronix.com
+          DOMAIN=apiflow.afronix.com
+          BASE_URL=https://apiflow.afronix.com
           NGINX_HTTP_PORT=80
           NGINX_HTTPS_PORT=443
           EOF"
@@ -310,8 +311,8 @@ jobs:
         if: success()
         run: |
           echo "🎉 Production deployment successful!"
-          echo "📍 Wildcard URL: https://*.flow.afronix.com"
-          echo "📍 Base URL: https://flow.afronix.com"
+          echo "📍 Wildcard URL: https://*.apiflow.afronix.com"
+          echo "📍 Base URL: https://apiflow.afronix.com"
           echo "🏷️ Version: ${{ needs.generate-version.outputs.version }}"
           echo "📝 Commit: ${{ github.event.head_commit.message }}"
           echo "👤 Deployed by: ${{ github.actor }}"

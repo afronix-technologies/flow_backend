@@ -160,12 +160,12 @@ jobs:
           # Google OAuth
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+          GOOGLE_CALLBACK_URL=https://devflow.afronix.com:8443/api/v1/auth/google/callback
 
           # Microsoft OAuth
           MICROSOFT_CLIENT_ID=${{ secrets.MICROSOFT_CLIENT_ID }}
           MICROSOFT_CLIENT_SECRET=${{ secrets.MICROSOFT_CLIENT_SECRET }}
-          MICROSOFT_CALLBACK_URL=${{ secrets.MICROSOFT_CALLBACK_URL }}
+          MICROSOFT_CALLBACK_URL=https://devflow.afronix.com:8443/api/v1/auth/microsoft/callback
           MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_TENANT_ID }}
 
           # Rate Limit 
@@ -177,7 +177,7 @@ jobs:
           MAX_FILE_SIZE=524288000
           
           # CORS - Updated for wildcard subdomains
-          CORS_ORIGINS=https://*.staging.flow.afronix.com,https://staging.flow.afronix.com,https://staging.flow.afronix.com:8443,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:4200,http://localhost:4201,https://flowwithafronix.vercel.app,https://test-flow.afronix.com,https://*.test-flow.afronix.com,http://johntech.localhost:4201,http://johntech.localhost:4200
+          CORS_ORIGINS=https://*.devflow.afronix.com,https://devflow.afronix.com,https://devflow.afronix.com:8443,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:4200,http://localhost:4201,https://flowwithafronix.vercel.app,https://test-flow.afronix.com,https://*.test-flow.afronix.com,http://johntech.localhost:4201,http://johntech.localhost:4200
           
           # Admin Panel
           ADMIN_SERVICE_PORT=3006
@@ -193,8 +193,8 @@ jobs:
           IMAGE_TAG=staging-latest
           
           # Nginx - Updated for wildcard subdomains
-          DOMAIN=staging.flow.afronix.com
-          BASE_URL=https://staging.flow.afronix.com:8443
+          DOMAIN=devflow.afronix.com
+          BASE_URL=https://devflow.afronix.com:8443
           NGINX_HTTP_PORT=8080
           NGINX_HTTPS_PORT=8443
           EOF"
@@ -270,8 +270,8 @@ jobs:
       - name: Deployment summary
         run: |
           echo "🎉 Staging deployment successful!"
-          echo "📍 Wildcard URL: https://*.staging.flow.afronix.com"
-          echo "📍 Base URL: https://staging.flow.afronix.com"
+          echo "📍 Wildcard URL: https://*.devflow.afronix.com"
+          echo "📍 Base URL: https://devflow.afronix.com"
           echo "🏷️ Image tag: staging-${{ github.sha }}"
           echo "📝 Commit: ${{ github.event.head_commit.message }}"
 
