@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 
 import { sharedCorsConfig } from '@app/common';
+import * as basicAuth from 'express-basic-auth';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -31,6 +32,17 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  const swaggerUser = process.env.SWAGGER_USER;
+  const swaggerPassword = process.env.SWAGGER_PASSWORD;
+  if (swaggerUser && swaggerPassword) {
+    app.use(
+      ['/api/docs', '/api/docs-json'],
+      basicAuth({ users: { [swaggerUser]: swaggerPassword }, challenge: true }),
+    );
+  } else {
+    console.warn('WARNING: SWAGGER_USER/SWAGGER_PASSWORD not set — Swagger is unprotected');
+  }
 
   // Swagger Configuration
   const config = new DocumentBuilder()

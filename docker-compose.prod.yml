@@ -9,13 +9,13 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
     ports:
-      - "${DATABASE_PORT}:5432"
+      - '${DATABASE_PORT}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - afronix-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE_USER}" ]
+      test: ['CMD-SHELL', 'pg_isready -U ${DATABASE_USER}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,10 +25,10 @@ services:
           cpus: '1'
           memory: 1G
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # Redis Service
   redis:
@@ -37,13 +37,13 @@ services:
     restart: unless-stopped
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     networks:
       - afronix-network
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 3s
       retries: 5
@@ -53,10 +53,10 @@ services:
           cpus: '0.5'
           memory: 512M
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # Auth Service
   auth-service:
@@ -64,7 +64,7 @@ services:
     container_name: auth-service
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - AUTH_SERVICE_PORT=3001
@@ -81,6 +81,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - NOTIFICATION_SERVICE_URL=http://notification-service:3002
+      - API_SERVICE_URL=http://api:3000
       - CORS_ORIGINS=${CORS_ORIGINS}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
@@ -97,12 +98,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      api:
+        condition: service_healthy
     networks:
       - afronix-network
     volumes:
       - /var/log/applications/flow:/app/logs
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3001/api/v1/health" ]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3001/api/v1/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -113,10 +116,10 @@ services:
           cpus: '1'
           memory: 512M
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # Notification Service
   notification-service:
@@ -124,7 +127,7 @@ services:
     container_name: notification-service
     restart: unless-stopped
     ports:
-      - "3002:3002"
+      - '3002:3002'
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - NOTIFICATION_SERVICE_PORT=3002
@@ -143,7 +146,7 @@ services:
     volumes:
       - /var/log/applications/flow:/app/logs
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3002/api/v1/health" ]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3002/api/v1/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -154,10 +157,10 @@ services:
           cpus: '0.5'
           memory: 256M
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # Job Service
   job-service:
@@ -165,7 +168,7 @@ services:
     container_name: job-service
     restart: unless-stopped
     ports:
-      - "3003:3003"
+      - '3003:3003'
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - JOB_SERVICE_PORT=3003
@@ -187,7 +190,7 @@ services:
     volumes:
       - /var/log/applications/flow:/app/logs
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3003/api/v1/health" ]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3003/api/v1/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -198,10 +201,10 @@ services:
           cpus: '0.5'
           memory: 256M
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # File Service
   file-service:
@@ -209,7 +212,7 @@ services:
     container_name: file-service
     restart: unless-stopped
     ports:
-      - "3004:3004"
+      - '3004:3004'
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - FILE_SERVICE_PORT=3004
@@ -231,7 +234,7 @@ services:
       - /srv/data/uploads:/srv/data/uploads
       - /var/log/applications/flow:/app/logs
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3004/api/v1/health" ]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3004/api/v1/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -240,6 +243,49 @@ services:
       resources:
         limits:
           cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # API Service (core product — projects, tasks, etc.)
+  api:
+    image: ${DOCKER_REGISTRY}/flow-api:${IMAGE_TAG:-production-latest}
+    container_name: api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - API_PORT=3000
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_SSL=${DATABASE_SSL:-false}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-7d}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - afronix-network
+    volumes:
+      - /var/log/applications/flow:/app/logs
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/v1/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
           memory: 512M
     logging:
       driver: "json-file"
@@ -253,7 +299,7 @@ services:
     container_name: settings-service
     restart: unless-stopped
     ports:
-      - "3005:3005"
+      - '3005:3005'
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - SETTINGS_SERVICE_PORT=3005
@@ -273,7 +319,7 @@ services:
     volumes:
       - /var/log/applications/flow:/app/logs
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3005/health" ]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3005/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -284,10 +330,74 @@ services:
           cpus: '0.5'
           memory: 256M
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
+
+  # Admin Panel
+  admin-service:
+    image: ${DOCKER_REGISTRY}/flow-admin-service:${IMAGE_TAG:-production-latest}
+    container_name: admin-service
+    restart: unless-stopped
+    ports:
+      - '3006:3006'
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - ADMIN_SERVICE_PORT=3006
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_SSL=${DATABASE_SSL:-false}
+      - ADMIN_COOKIE_SECRET=${ADMIN_COOKIE_SECRET}
+      - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - afronix-network
+    volumes:
+      - /var/log/applications/flow:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # Super Admin Seeder — runs once on deploy, exits when done
+  seeder:
+    image: ${DOCKER_REGISTRY}/flow-auth-service:${IMAGE_TAG:-production-latest}
+    container_name: flow-seeder
+    restart: 'no'
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_SSL=${DATABASE_SSL:-false}
+      - SUPERADMIN_EMAIL=${SUPERADMIN_EMAIL}
+      - SUPERADMIN_PASSWORD=${SUPERADMIN_PASSWORD}
+      - SUPERADMIN_FIRST_NAME=${SUPERADMIN_FIRST_NAME:-Afronix}
+      - SUPERADMIN_LAST_NAME=${SUPERADMIN_LAST_NAME:-Admin}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npx ts-node -r tsconfig-paths/register scripts/seed-superadmin.ts
+    networks:
+      - afronix-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '5m'
+        max-file: '1'
 
   # Nginx Reverse Proxy
   nginx:
@@ -295,8 +405,8 @@ services:
     container_name: flow-nginx
     restart: unless-stopped
     ports:
-      - "${NGINX_HTTP_PORT:-80}:80"
-      - "${NGINX_HTTPS_PORT:-443}:443"
+      - '${NGINX_HTTP_PORT:-80}:80'
+      - '${NGINX_HTTPS_PORT:-443}:443'
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/templates/nginx.conf.template:ro
       - ./nginx/ssl:/etc/nginx/ssl
@@ -310,10 +420,12 @@ services:
       - job-service
       - file-service
       - settings-service
+      - admin-service
+      - api
     networks:
       - afronix-network
     healthcheck:
-      test: [ "CMD", "nginx", "-t" ]
+      test: ['CMD', 'nginx', '-t']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -323,10 +435,10 @@ services:
           cpus: '0.5'
           memory: 256M
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # Certbot for SSL Certificate Management
   certbot:

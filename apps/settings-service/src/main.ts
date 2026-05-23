@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { sharedCorsConfig } from '@app/common';
+import * as basicAuth from 'express-basic-auth';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,6 +25,17 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  const swaggerUser = process.env.SWAGGER_USER;
+  const swaggerPassword = process.env.SWAGGER_PASSWORD;
+  if (swaggerUser && swaggerPassword) {
+    app.use(
+      ['/api/docs/settings', '/api/docs/settings-json'],
+      basicAuth({ users: { [swaggerUser]: swaggerPassword }, challenge: true }),
+    );
+  } else {
+    console.warn('WARNING: SWAGGER_USER/SWAGGER_PASSWORD not set — Swagger is unprotected');
+  }
 
   const config = new DocumentBuilder()
     .setTitle('Flow Settings Service API')

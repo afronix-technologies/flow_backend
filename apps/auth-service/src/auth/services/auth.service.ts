@@ -5,6 +5,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -30,10 +31,14 @@ import { AuthGateway } from '../gateways/auth.gateway';
 import { v4 as uuidv4 } from 'uuid';
 
 import { RefreshToken } from '../entities/refresh-token.entity';
+import { OrganizationWorkspace } from '../entities/organization-workspace.entity';
 import { SessionService } from './session.service';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -45,6 +50,8 @@ export class AuthService {
     private invitationRepository: Repository<Invitation>,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(OrganizationWorkspace)
+    private orgWorkspaceRepository: Repository<OrganizationWorkspace>,
     private passwordService: PasswordService,
     private jwtService: JwtService,
     private configService: ConfigService,
@@ -124,6 +131,12 @@ export class AuthService {
     // Delay slightly or ensure client connection flow
     this.authGateway.sendWelcomeMessage(savedUser.id, `Welcome to Flow, ${savedUser.firstName}!`);
 
+    // Fire-and-forget: seed default projects for the new org
+    const apiUrl = this.configService.get<string>('API_SERVICE_URL', 'http://api:3000');
+    axios
+      .post(`${apiUrl}/api/v1/internal/organizations/${savedOrg.id}/seed-projects`)
+      .catch((err) => this.logger.warn(`Failed to seed default projects: ${err.message}`));
+
     return { message: 'Check your email to verify your account' };
   }
 
@@ -169,7 +182,7 @@ export class AuthService {
       userAgent,
     });
 
-    const authResponse = this.generateAuthResponse(user, user.organization);
+    const authResponse = await this.generateAuthResponse(user, user.organization);
 
     return {
       sessionId,
@@ -257,7 +270,7 @@ export class AuthService {
       userAgent, // Extracted from request
     });
 
-    const authResponse = this.generateAuthResponse(userToLogin, userToLogin.organization);
+    const authResponse = await this.generateAuthResponse(userToLogin, userToLogin.organization);
 
     return {
       sessionId,
@@ -359,7 +372,7 @@ export class AuthService {
     // Update Org Team Size
     await this.organizationRepository.increment({ id: invitation.organizationId }, 'teamSize', 1);
 
-    return this.generateAuthResponse(savedUser, invitation.organization);
+    return await this.generateAuthResponse(savedUser, invitation.organization);
   }
 
   async bulkInvite(
@@ -512,7 +525,7 @@ export class AuthService {
 
     this.authGateway.sendWelcomeMessage(savedUser.id, `Welcome to Flow, ${savedUser.firstName}!`);
 
-    return this.generateAuthResponse(savedUser, org);
+    return await this.generateAuthResponse(savedUser, org);
   }
 
   async forgotPassword(forgotDto: ForgotPasswordDto): Promise<{ message: string }> {
@@ -588,7 +601,7 @@ export class AuthService {
 
     await this.userRepository.save(user); // Persist constraint/context
 
-    return this.generateAuthResponse(user, participation.organization);
+    return await this.generateAuthResponse(user, participation.organization);
   }
 
   async updateOrganization(orgId: string, updateDto: UpdateOrganizationDto): Promise<Organization> {
@@ -605,7 +618,7 @@ export class AuthService {
     return this.organizationRepository.save(org);
   }
 
-  generateAuthResponse(user: User, organization: Organization): AuthResponseDto {
+  async generateAuthResponse(user: User, organization: Organization): Promise<AuthResponseDto> {
     const payload = {
       sub: user.id,
       email: user.email,
@@ -626,6 +639,10 @@ export class AuthService {
       },
     );
 
+    const workspace = await this.orgWorkspaceRepository.findOne({
+      where: { organizationId: organization.id },
+    });
+
     return {
       accessToken,
       refreshToken,
@@ -634,13 +651,14 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role.name, // Map entity to string
+        role: user.role.name,
       },
       organization: {
         id: organization.id,
         name: organization.name,
         slug: organization.slug,
         onboardingStep: organization.onboardingStep,
+        packageKey: workspace?.packageKey ?? null,
       },
     };
   }

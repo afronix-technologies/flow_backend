@@ -13,6 +13,9 @@ import { FeaturesModule } from './features/features.module';
 import { NavigationModule } from './navigation/navigation.module';
 import { WorkspaceModule } from './workspace/workspace.module';
 import { SeedModule } from './seed/seed.module';
+import { WorkPoliciesModule } from './work-policies/work-policies.module';
+import { DepartmentsModule } from './departments/departments.module';
+import { MembersModule } from './members/members.module';
 
 @Module({
   imports: [
@@ -47,6 +50,9 @@ import { SeedModule } from './seed/seed.module';
     NavigationModule,
     WorkspaceModule,
     SeedModule,
+    WorkPoliciesModule,
+    DepartmentsModule,
+    MembersModule,
   ],
   controllers: [AppController],
   providers: [

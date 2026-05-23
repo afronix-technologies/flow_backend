@@ -1,0 +1,6 @@
+﻿
+C:\Users\hp\Desktop\afronix-tracker\apps\settings-service\src\departments\departments.service.ts
+  4:22  error  'DepartmentStatus' is defined but never used  @typescript-eslint/no-unused-vars
+
+Ô£û 1 problem (1 error, 0 warnings)
+

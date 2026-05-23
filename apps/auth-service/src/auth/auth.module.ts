@@ -31,6 +31,7 @@ import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
 import { OAuthAccount } from './entities/oauth-account.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { OrganizationWorkspace } from './entities/organization-workspace.entity';
 import { SessionService } from './services/session.service';
 import { SessionGuard } from './guards/session.guard';
 import { SubdomainGuard } from './guards/subdomain.guard';
@@ -52,6 +53,7 @@ import { buildUnconfiguredStrategy } from './strategies/unconfigured.strategy';
       Permission,
       OAuthAccount,
       RefreshToken,
+      OrganizationWorkspace,
     ]),
     PassportModule,
     ConfigModule,

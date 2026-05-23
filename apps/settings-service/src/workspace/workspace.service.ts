@@ -67,16 +67,18 @@ export class WorkspaceService {
     orgWorkspace.setupStatus = 'ready';
     await this.orgWorkspaceRepo.save(orgWorkspace);
 
-    // Determine which package keys to enable (workforce includes project-management)
-    const packageKeys = [packageKey];
-    if (packageKey === 'workforce') {
-      packageKeys.push('project-management');
-    }
+    // Map workspace package keys to feature_catalog package values (DB uses underscores)
+    const featurePackageMap: Record<string, string[]> = {
+      'time-tracking': ['time_tracking'],
+      'project-management': ['project_management'],
+      workforce: ['workforce_management', 'project_management'],
+    };
+    const featurePackages = featurePackageMap[packageKey] ?? [packageKey];
 
     // Get all default features for those packages
     const features = await this.catalogRepo
       .createQueryBuilder('f')
-      .where('f.package IN (:...packages)', { packages: packageKeys })
+      .where('f.package IN (:...packages)', { packages: featurePackages })
       .andWhere('f.isDefault = true')
       .getMany();
 

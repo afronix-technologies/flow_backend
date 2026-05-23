@@ -7,6 +7,8 @@ import { invitationTemplate } from './templates/invitation.template';
 import { verificationTemplate } from './templates/verification.template';
 import { passwordResetTemplate } from './templates/password-reset.template';
 import { welcomeTemplate } from './templates/welcome.template';
+import { dataExportReadyTemplate } from './templates/data-export-ready.template';
+import { deletionConfirmationTemplate } from './templates/deletion-confirmation.template';
 
 @ApiTags('Email')
 @Controller('email')
@@ -75,6 +77,34 @@ export class EmailController {
     return { message: 'Welcome email sent' };
   }
 
+  @Post('data-export-ready')
+  @ApiOperation({ summary: 'Send data export ready email' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { email: { type: 'string' }, downloadUrl: { type: 'string' } },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Email sent' })
+  async sendDataExportReadyEmail(@Body() body: { email: string; downloadUrl: string }) {
+    await this.emailService.sendDataExportReadyEmail(body.email, body.downloadUrl);
+    return { message: 'Data export ready email sent' };
+  }
+
+  @Post('deletion-confirmation')
+  @ApiOperation({ summary: 'Send data deletion confirmation email' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { email: { type: 'string' }, token: { type: 'string' } },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Email sent' })
+  async sendDeletionConfirmationEmail(@Body() body: { email: string; token: string }) {
+    await this.emailService.sendDeletionConfirmationEmail(body.email, body.token);
+    return { message: 'Deletion confirmation email sent' };
+  }
+
   // --- Local Testing / Preview ---
   @Get('preview/:type')
   @ApiOperation({ summary: 'Preview email template' })
@@ -97,9 +127,15 @@ export class EmailController {
       case 'welcome':
         html = welcomeTemplate(mockName, mockUrl);
         break;
+      case 'data-export-ready':
+        html = dataExportReadyTemplate(mockUrl);
+        break;
+      case 'deletion-confirmation':
+        html = deletionConfirmationTemplate(mockUrl);
+        break;
       default:
         throw new BadRequestException(
-          'Invalid template type. Try: verification, invitation, reset, welcome',
+          'Invalid template type. Try: verification, invitation, reset, welcome, data-export-ready, deletion-confirmation',
         );
     }
 

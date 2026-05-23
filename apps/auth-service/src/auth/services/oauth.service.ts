@@ -102,7 +102,7 @@ export class OAuthService {
       userAgent,
     });
 
-    const authResponse = this.authService.generateAuthResponse(user, organization);
+    const authResponse = await this.authService.generateAuthResponse(user, organization);
 
     return {
       ...authResponse,
