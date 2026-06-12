@@ -188,6 +188,11 @@ jobs:
           SUPERADMIN_FIRST_NAME=Afronix
           SUPERADMIN_LAST_NAME=Admin
 
+          # Payment Providers
+          FLUTTERWAVE_SECRET_KEY=${{ secrets.FLUTTERWAVE_SECRET_KEY }}
+          PAYSTACK_SECRET_KEY=${{ secrets.PAYSTACK_SECRET_KEY }}
+          BILLING_CALLBACK_URL=https://test-flow.afronix.com/billing/callback
+
           # Docker
           DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
           IMAGE_TAG=staging-latest

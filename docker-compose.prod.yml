@@ -310,16 +310,23 @@ services:
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_SSL=${DATABASE_SSL:-false}
       - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - CORS_ORIGINS=${CORS_ORIGINS}
+      - FLUTTERWAVE_SECRET_KEY=${FLUTTERWAVE_SECRET_KEY}
+      - PAYSTACK_SECRET_KEY=${PAYSTACK_SECRET_KEY}
+      - BILLING_CALLBACK_URL=${BILLING_CALLBACK_URL}
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - afronix-network
     volumes:
       - /var/log/applications/flow:/app/logs
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3005/health']
+      test: ['CMD', 'curl', '-f', 'http://localhost:3005/api/v1/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -328,7 +335,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 256M
+          memory: 512M
     logging:
       driver: 'json-file'
       options:
