@@ -34,6 +34,22 @@ export class FeaturesController {
   }
 
   /**
+   * GET /api/v1/organizations/:org_id/features/catalogue
+   * Returns enriched feature catalogue with upgrade requirements and pack attribution.
+   */
+  @Get(':org_id/features/catalogue')
+  @ApiOperation({ summary: 'Get full feature catalogue with plan-gating info for an organisation' })
+  @ApiParam({ name: 'org_id', description: 'Organisation UUID' })
+  async getCatalogue(
+    @Param('org_id') orgId: string,
+    @Request() req: any,
+  ) {
+    this.assertSameOrg(req.user.organizationId, orgId);
+    const planName: string = req.user.planName ?? 'Free';
+    return this.featuresService.getCatalogue(orgId, planName);
+  }
+
+  /**
    * PATCH /api/v1/organizations/:org_id/features/:feature_key
    * Enable or disable a feature (admin only).
    */

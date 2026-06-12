@@ -21,7 +21,19 @@ export class FeatureCatalog {
   tier: string; // 'standard' | 'professional'
 
   @Column({ default: true })
-  isDefault: boolean; // auto-enabled when package is selected
+  isDefault: boolean;
+
+  // Workspace config in hyphenated format used by the frontend
+  @Column({ nullable: true })
+  sourceConfig: string; // 'time-tracking' | 'project-management' | 'workforce'
+
+  // Minimum billing plan required to use this feature
+  @Column({ nullable: true })
+  minimumPlan: string; // 'Free' | 'Starter' | 'Professional' | 'Enterprise'
+
+  // If the feature is delivered via a feature pack, the pack's id (e.g. 'time-pack')
+  @Column({ nullable: true })
+  packId: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -121,6 +121,12 @@ export class WorkspaceService {
    */
   async getOrgWorkspace(organizationId: string) {
     const workspace = await this.orgWorkspaceRepo.findOne({ where: { organizationId } });
-    return workspace ?? null;
+    if (!workspace) return null;
+
+    const pkg = await this.packageRepo.findOne({ where: { key: workspace.packageKey } });
+    return {
+      packageKey: workspace.packageKey,
+      name: pkg?.title ?? workspace.packageKey,
+    };
   }
 }

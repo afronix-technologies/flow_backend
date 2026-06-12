@@ -36,6 +36,14 @@ import { TeamMember } from '../../settings-service/src/members/entities/team-mem
 // ── File Service Entities ─────────────────────────────────────────────────────
 import { File } from '../../file-service/src/files/entities/file.entity';
 
+// ── Billing Service Entities ──────────────────────────────────────────────────
+import { BillingPlan } from '../../settings-service/src/billing/entities/billing-plan.entity';
+import { FeaturePack } from '../../settings-service/src/billing/entities/feature-pack.entity';
+import { OrgSubscription } from '../../settings-service/src/billing/entities/org-subscription.entity';
+import { OrgActivePack } from '../../settings-service/src/billing/entities/org-active-pack.entity';
+import { Invoice } from '../../settings-service/src/billing/entities/invoice.entity';
+import { CountryPaymentConfig } from '../../settings-service/src/billing/entities/country-payment-config.entity';
+
 // ── API Service Entities ──────────────────────────────────────────────────────
 import { Project } from '../../api/src/modules/projects/entities/project.entity';
 import { ProjectTask } from '../../api/src/modules/projects/entities/project-task.entity';
@@ -71,6 +79,12 @@ export const ALL_ENTITIES = [
   Department,
   TeamMember,
   File,
+  BillingPlan,
+  FeaturePack,
+  OrgSubscription,
+  OrgActivePack,
+  Invoice,
+  CountryPaymentConfig,
   Project,
   ProjectTask,
   AuditLog,

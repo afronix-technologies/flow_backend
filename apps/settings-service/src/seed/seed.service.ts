@@ -5,6 +5,9 @@ import { FeatureCatalog } from '../features/entities/feature-catalog.entity';
 import { NavigationItem } from '../navigation/entities/navigation-item.entity';
 import { NavigationRoleOverride } from '../navigation/entities/navigation-role-override.entity';
 import { WorkspacePackage } from '../workspace/entities/workspace-package.entity';
+import { BillingPlan } from '../billing/entities/billing-plan.entity';
+import { FeaturePack } from '../billing/entities/feature-pack.entity';
+import { CountryPaymentConfig } from '../billing/entities/country-payment-config.entity';
 
 @Injectable()
 export class SeedService implements OnModuleInit {
@@ -22,6 +25,15 @@ export class SeedService implements OnModuleInit {
 
     @InjectRepository(WorkspacePackage)
     private readonly workspacePackageRepo: Repository<WorkspacePackage>,
+
+    @InjectRepository(BillingPlan)
+    private readonly billingPlanRepo: Repository<BillingPlan>,
+
+    @InjectRepository(FeaturePack)
+    private readonly featurePackRepo: Repository<FeaturePack>,
+
+    @InjectRepository(CountryPaymentConfig)
+    private readonly countryPaymentRepo: Repository<CountryPaymentConfig>,
   ) {}
 
   async onModuleInit() {
@@ -29,6 +41,9 @@ export class SeedService implements OnModuleInit {
     await this.seedFeatureCatalog();
     await this.seedNavigationItems();
     await this.seedRoleOverrides();
+    await this.seedBillingPlans();
+    await this.seedFeaturePacks();
+    await this.seedCountryPaymentConfigs();
   }
 
   // ---------------------------------------------------------------------------
@@ -100,10 +115,7 @@ export class SeedService implements OnModuleInit {
   // ---------------------------------------------------------------------------
 
   private async seedFeatureCatalog() {
-    const count = await this.catalogRepo.count();
-    if (count > 0) return;
-
-    this.logger.log('Seeding feature_catalog...');
+    this.logger.log('Upserting feature_catalog...');
 
     const features: Partial<FeatureCatalog>[] = [
       // Time Tracking package
@@ -111,6 +123,8 @@ export class SeedService implements OnModuleInit {
         key: 'start_stop_timer',
         name: 'Start/Stop Timer',
         package: 'time_tracking',
+        sourceConfig: 'time-tracking',
+        minimumPlan: 'Starter',
         description: 'Track time with a start/stop timer',
         isDefault: true,
       },
@@ -118,6 +132,8 @@ export class SeedService implements OnModuleInit {
         key: 'manual_time_entry',
         name: 'Manual Time Entry',
         package: 'time_tracking',
+        sourceConfig: 'time-tracking',
+        minimumPlan: 'Starter',
         description: 'Add time entries manually',
         isDefault: true,
       },
@@ -125,6 +141,8 @@ export class SeedService implements OnModuleInit {
         key: 'basic_project_assignment',
         name: 'Basic Project Assignment',
         package: 'time_tracking',
+        sourceConfig: 'time-tracking',
+        minimumPlan: 'Starter',
         description: 'Assign time to projects',
         isDefault: true,
       },
@@ -132,6 +150,8 @@ export class SeedService implements OnModuleInit {
         key: 'weekly_monthly_reports',
         name: 'Weekly/Monthly Reports',
         package: 'time_tracking',
+        sourceConfig: 'time-tracking',
+        minimumPlan: 'Starter',
         description: 'Generate weekly and monthly time reports',
         isDefault: true,
       },
@@ -141,6 +161,8 @@ export class SeedService implements OnModuleInit {
         key: 'full_time_tracking',
         name: 'Full Time Tracking',
         package: 'project_management',
+        sourceConfig: 'project-management',
+        minimumPlan: 'Starter',
         description: 'Complete time tracking suite',
         isDefault: true,
       },
@@ -148,13 +170,26 @@ export class SeedService implements OnModuleInit {
         key: 'project_task_management',
         name: 'Project & Task Management',
         package: 'project_management',
+        sourceConfig: 'project-management',
+        minimumPlan: 'Starter',
         description: 'Manage projects and tasks',
+        isDefault: true,
+      },
+      {
+        key: 'team_collaboration',
+        name: 'Team Collaboration',
+        package: 'project_management',
+        sourceConfig: 'project-management',
+        minimumPlan: 'Starter',
+        description: 'Collaborate across teams',
         isDefault: true,
       },
       {
         key: 'deadlines_priorities',
         name: 'Deadlines & Priorities',
         package: 'project_management',
+        sourceConfig: 'project-management',
+        minimumPlan: 'Starter',
         description: 'Set deadlines and task priorities',
         isDefault: true,
       },
@@ -162,14 +197,10 @@ export class SeedService implements OnModuleInit {
         key: 'performance_insights',
         name: 'Performance Insights',
         package: 'project_management',
+        sourceConfig: 'project-management',
+        minimumPlan: 'Professional',
+        tier: 'professional',
         description: 'Analytics and performance reports',
-        isDefault: true,
-      },
-      {
-        key: 'team_collaboration',
-        name: 'Team Collaboration',
-        package: 'project_management',
-        description: 'Collaborate across teams',
         isDefault: true,
       },
 
@@ -178,6 +209,9 @@ export class SeedService implements OnModuleInit {
         key: 'mandatory_clock_in_out',
         name: 'Mandatory Clock In/Out',
         package: 'workforce_management',
+        sourceConfig: 'workforce',
+        minimumPlan: 'Professional',
+        tier: 'professional',
         description: 'Require employees to clock in and out',
         isDefault: true,
       },
@@ -185,6 +219,9 @@ export class SeedService implements OnModuleInit {
         key: 'attendance_tracking',
         name: 'Attendance Tracking',
         package: 'workforce_management',
+        sourceConfig: 'workforce',
+        minimumPlan: 'Professional',
+        tier: 'professional',
         description: 'Track employee attendance',
         isDefault: true,
       },
@@ -192,6 +229,9 @@ export class SeedService implements OnModuleInit {
         key: 'leave_management',
         name: 'Leave Management',
         package: 'workforce_management',
+        sourceConfig: 'workforce',
+        minimumPlan: 'Professional',
+        tier: 'professional',
         description: 'Manage employee leave requests',
         isDefault: true,
       },
@@ -199,13 +239,223 @@ export class SeedService implements OnModuleInit {
         key: 'shift_scheduling',
         name: 'Shift Scheduling',
         package: 'workforce_management',
+        sourceConfig: 'workforce',
+        minimumPlan: 'Professional',
+        tier: 'professional',
         description: 'Schedule employee shifts',
         isDefault: true,
       },
     ];
 
-    await this.catalogRepo.save(features.map((f) => this.catalogRepo.create(f)));
-    this.logger.log(`Seeded ${features.length} features.`);
+    for (const f of features) {
+      await this.catalogRepo
+        .createQueryBuilder()
+        .insert()
+        .into(FeatureCatalog)
+        .values(f as FeatureCatalog)
+        .orUpdate(
+          ['name', 'description', 'package', 'source_config', 'minimum_plan', 'pack_id', 'tier', 'is_default'],
+          ['key'],
+        )
+        .execute();
+    }
+
+    this.logger.log(`Upserted ${features.length} feature catalog entries.`);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Billing Plans
+  // ---------------------------------------------------------------------------
+
+  private async seedBillingPlans() {
+    this.logger.log('Upserting billing_plans...');
+
+    const plans: Partial<BillingPlan>[] = [
+      {
+        name: 'Free',
+        tagline: 'Get started at no cost',
+        pricePerSeat: 0,
+        annualDiscount: 0,
+        seatLimit: 3,
+        allowedConfigs: ['time-tracking'],
+        highlights: ['Up to 3 seats', 'Time Tracking only', 'Community support', 'No feature packs'],
+        sortOrder: 0,
+      },
+      {
+        name: 'Starter',
+        tagline: 'For small teams getting started',
+        pricePerSeat: 5,
+        annualDiscount: 0,
+        seatLimit: 10,
+        allowedConfigs: ['time-tracking', 'project-management'],
+        highlights: ['Up to 10 seats', 'Time Tracking or Project Management', 'Community support', 'No feature packs'],
+        sortOrder: 1,
+      },
+      {
+        name: 'Professional',
+        tagline: 'For growing teams that need flexibility',
+        pricePerSeat: 12,
+        annualDiscount: 0.20,
+        seatLimit: 50,
+        allowedConfigs: ['time-tracking', 'project-management', 'workforce'],
+        highlights: [
+          'Up to 50 seats',
+          'Any workspace config',
+          'Feature packs à la carte',
+          'Priority support',
+          'Save 20% annually',
+        ],
+        sortOrder: 2,
+      },
+      {
+        name: 'Enterprise',
+        tagline: 'For large orgs with custom needs',
+        pricePerSeat: 0,
+        annualDiscount: 0.20,
+        seatLimit: null,
+        allowedConfigs: ['time-tracking', 'project-management', 'workforce'],
+        highlights: [
+          'Unlimited seats',
+          'All workspace configs',
+          'All packs included',
+          'SSO & SAML',
+          'Dedicated success manager',
+        ],
+        sortOrder: 3,
+      },
+    ];
+
+    for (const p of plans) {
+      await this.billingPlanRepo
+        .createQueryBuilder()
+        .insert()
+        .into(BillingPlan)
+        .values(p as BillingPlan)
+        .orUpdate(
+          ['tagline', 'price_per_seat', 'annual_discount', 'seat_limit', 'allowed_configs', 'highlights', 'sort_order'],
+          ['name'],
+        )
+        .execute();
+    }
+
+    this.logger.log(`Upserted ${plans.length} billing plans.`);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Feature Packs
+  // ---------------------------------------------------------------------------
+
+  private async seedFeaturePacks() {
+    this.logger.log('Upserting feature_packs...');
+
+    const packs: Partial<FeaturePack>[] = [
+      {
+        id: 'time-pack',
+        name: 'Time Tracking Pack',
+        sourceConfig: 'time-tracking',
+        description: 'Simple time tracking for accurate payroll and client billing.',
+        features: [
+          'start_stop_timer',
+          'manual_time_entry',
+          'basic_project_assignment',
+          'weekly_monthly_reports',
+        ],
+        pricePerSeat: 3,
+        minimumPlan: 'Professional',
+      },
+      {
+        id: 'workforce-pack',
+        name: 'Workforce Pack',
+        sourceConfig: 'workforce',
+        description: 'Comprehensive team oversight with mandatory attendance tracking, shift management, and workforce coordination.',
+        features: [
+          'attendance_tracking',
+          'leave_management',
+          'shift_scheduling',
+        ],
+        pricePerSeat: 4,
+        minimumPlan: 'Professional',
+      },
+    ];
+
+    for (const p of packs) {
+      await this.featurePackRepo
+        .createQueryBuilder()
+        .insert()
+        .into(FeaturePack)
+        .values(p as FeaturePack)
+        .orUpdate(
+          ['name', 'source_config', 'description', 'features', 'price_per_seat', 'minimum_plan'],
+          ['id'],
+        )
+        .execute();
+    }
+
+    this.logger.log(`Upserted ${packs.length} feature packs.`);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Country Payment Configs
+  // ---------------------------------------------------------------------------
+
+  private async seedCountryPaymentConfigs() {
+    this.logger.log('Upserting country_payment_configs...');
+
+    const configs: Partial<CountryPaymentConfig>[] = [
+      // ── Fallback (must exist) ──────────────────────────────────────────────
+      { countryCode: 'DEFAULT', currency: 'USD', currencySymbol: '$', paymentMethods: ['card'] },
+
+      // ── Africa — Flutterwave + Paystack ────────────────────────────────────
+      { countryCode: 'NG', currency: 'NGN', currencySymbol: '₦', paymentMethods: ['paystack', 'flutterwave'] },
+      { countryCode: 'GH', currency: 'GHS', currencySymbol: 'GH₵', paymentMethods: ['paystack', 'flutterwave'] },
+      { countryCode: 'KE', currency: 'KES', currencySymbol: 'KSh', paymentMethods: ['flutterwave'] },
+      { countryCode: 'ZA', currency: 'ZAR', currencySymbol: 'R', paymentMethods: ['paystack', 'flutterwave'] },
+      { countryCode: 'UG', currency: 'UGX', currencySymbol: 'USh', paymentMethods: ['flutterwave'] },
+      { countryCode: 'TZ', currency: 'TZS', currencySymbol: 'TSh', paymentMethods: ['flutterwave'] },
+      { countryCode: 'RW', currency: 'RWF', currencySymbol: 'RF', paymentMethods: ['flutterwave'] },
+      { countryCode: 'ZM', currency: 'ZMW', currencySymbol: 'ZK', paymentMethods: ['flutterwave'] },
+      { countryCode: 'CI', currency: 'XOF', currencySymbol: 'CFA', paymentMethods: ['flutterwave'] },
+      { countryCode: 'SN', currency: 'XOF', currencySymbol: 'CFA', paymentMethods: ['flutterwave'] },
+      { countryCode: 'CM', currency: 'XAF', currencySymbol: 'CFA', paymentMethods: ['flutterwave'] },
+      { countryCode: 'ET', currency: 'ETB', currencySymbol: 'Br', paymentMethods: ['flutterwave'] },
+      { countryCode: 'EG', currency: 'EGP', currencySymbol: 'E£', paymentMethods: ['flutterwave'] },
+      { countryCode: 'MA', currency: 'MAD', currencySymbol: 'د.م.', paymentMethods: ['flutterwave'] },
+
+      // ── UK & Europe — card ─────────────────────────────────────────────────
+      { countryCode: 'GB', currency: 'GBP', currencySymbol: '£', paymentMethods: ['card'] },
+      { countryCode: 'DE', currency: 'EUR', currencySymbol: '€', paymentMethods: ['card'] },
+      { countryCode: 'FR', currency: 'EUR', currencySymbol: '€', paymentMethods: ['card'] },
+      { countryCode: 'NL', currency: 'EUR', currencySymbol: '€', paymentMethods: ['card'] },
+      { countryCode: 'ES', currency: 'EUR', currencySymbol: '€', paymentMethods: ['card'] },
+      { countryCode: 'IT', currency: 'EUR', currencySymbol: '€', paymentMethods: ['card'] },
+      { countryCode: 'PT', currency: 'EUR', currencySymbol: '€', paymentMethods: ['card'] },
+      { countryCode: 'IE', currency: 'EUR', currencySymbol: '€', paymentMethods: ['card'] },
+      { countryCode: 'SE', currency: 'SEK', currencySymbol: 'kr', paymentMethods: ['card'] },
+      { countryCode: 'NO', currency: 'NOK', currencySymbol: 'kr', paymentMethods: ['card'] },
+      { countryCode: 'DK', currency: 'DKK', currencySymbol: 'kr', paymentMethods: ['card'] },
+      { countryCode: 'CH', currency: 'CHF', currencySymbol: 'CHF', paymentMethods: ['card'] },
+
+      // ── Americas & Asia-Pacific — card ─────────────────────────────────────
+      { countryCode: 'US', currency: 'USD', currencySymbol: '$', paymentMethods: ['card'] },
+      { countryCode: 'CA', currency: 'CAD', currencySymbol: 'C$', paymentMethods: ['card'] },
+      { countryCode: 'AU', currency: 'AUD', currencySymbol: 'A$', paymentMethods: ['card'] },
+      { countryCode: 'NZ', currency: 'NZD', currencySymbol: 'NZ$', paymentMethods: ['card'] },
+      { countryCode: 'SG', currency: 'SGD', currencySymbol: 'S$', paymentMethods: ['card'] },
+      { countryCode: 'IN', currency: 'INR', currencySymbol: '₹', paymentMethods: ['card'] },
+      { countryCode: 'AE', currency: 'AED', currencySymbol: 'د.إ', paymentMethods: ['card'] },
+    ];
+
+    for (const c of configs) {
+      await this.countryPaymentRepo
+        .createQueryBuilder()
+        .insert()
+        .into(CountryPaymentConfig)
+        .values(c as CountryPaymentConfig)
+        .orUpdate(['currency', 'currency_symbol', 'payment_methods'], ['country_code'])
+        .execute();
+    }
+
+    this.logger.log(`Upserted ${configs.length} country payment configs.`);
   }
 
   // ---------------------------------------------------------------------------

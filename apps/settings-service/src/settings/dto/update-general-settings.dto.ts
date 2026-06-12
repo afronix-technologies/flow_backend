@@ -28,4 +28,9 @@ export class UpdateGeneralSettingsDto {
   @IsOptional()
   @IsString()
   companySize?: string;
+
+  @ApiPropertyOptional({ example: 'NG', description: 'ISO 3166-1 alpha-2 country code, or "OTHER"' })
+  @IsOptional()
+  @IsString()
+  country?: string;
 }

@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bull';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { databaseConfig } from './core/config/database.config';
 import { redisConfig } from './core/config/redis.config';
@@ -16,6 +17,7 @@ import { SeedModule } from './seed/seed.module';
 import { WorkPoliciesModule } from './work-policies/work-policies.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { MembersModule } from './members/members.module';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -45,10 +47,12 @@ import { MembersModule } from './members/members.module';
         limit: 100,
       },
     ]),
+    ScheduleModule.forRoot(),
     SettingsModule,
     FeaturesModule,
     NavigationModule,
     WorkspaceModule,
+    BillingModule,
     SeedModule,
     WorkPoliciesModule,
     DepartmentsModule,

@@ -37,6 +37,10 @@ export class GeneralSettings {
   @Column({ name: 'company_size', nullable: true })
   companySize: string;
 
+  /** ISO 3166-1 alpha-2 country code e.g. "NG", "GH", "US" — or "OTHER" */
+  @Column({ nullable: true })
+  country: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

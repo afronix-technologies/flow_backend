@@ -4,6 +4,13 @@ import { Repository } from 'typeorm';
 import { FeatureCatalog } from './entities/feature-catalog.entity';
 import { OrganizationFeature } from './entities/organization-feature.entity';
 
+const PLAN_RANK: Record<string, number> = {
+  Free: 0,
+  Starter: 1,
+  Professional: 2,
+  Enterprise: 3,
+};
+
 @Injectable()
 export class FeaturesService {
   constructor(
@@ -71,6 +78,33 @@ export class FeaturesService {
       enabledAt: orgFeature.enabledAt,
       enabledBy: userId,
     };
+  }
+
+  /**
+   * Returns the full feature catalogue for an org, enriched with per-org enabled status,
+   * upgrade requirements, and pack attribution.
+   */
+  async getCatalogue(organizationId: string, currentPlanName = 'Free') {
+    const allFeatures = await this.catalogRepo.find({ order: { package: 'ASC', name: 'ASC' } });
+    const orgFeatures = await this.orgFeatureRepo.find({ where: { organizationId } });
+    const enabledMap = new Map(orgFeatures.map((f) => [f.featureKey, f.enabled]));
+    const currentRank = PLAN_RANK[currentPlanName] ?? 0;
+
+    return allFeatures.map((feature) => {
+      const minimumPlan = feature.minimumPlan ?? 'Starter';
+      const requiresUpgrade = (PLAN_RANK[minimumPlan] ?? 1) > currentRank;
+      return {
+        key: feature.key,
+        name: feature.name,
+        description: feature.description ?? null,
+        sourceConfig: feature.sourceConfig ?? feature.package.replace(/_/g, '-'),
+        minimumPlan,
+        enabled: enabledMap.get(feature.key) ?? false,
+        source: feature.packId ? 'pack' : 'plan',
+        packId: feature.packId ?? null,
+        requiresUpgrade,
+      };
+    });
   }
 
   /**
