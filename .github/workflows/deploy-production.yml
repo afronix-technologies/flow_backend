@@ -80,8 +80,8 @@ jobs:
           labels: |
             ${{ steps.meta.outputs.labels }}
             org.opencontainers.image.version=${{ needs.generate-version.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.service.name }}
+          cache-to: type=gha,scope=${{ matrix.service.name }},mode=max,ignore-error=true
           build-args: |
             NODE_ENV=production
             SERVICE_PORT=${{ matrix.service.port }}
