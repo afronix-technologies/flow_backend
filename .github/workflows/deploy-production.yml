@@ -258,9 +258,6 @@ jobs:
           echo "🚀 Starting production containers..."
           docker compose --env-file .env.production -f docker-compose.prod.yml up -d
           
-          echo "⏳ Waiting for all services..."
-          sleep 15
-          
           echo "✅ Deployment complete!"
           docker ps
           ENDSSH
@@ -293,7 +290,6 @@ jobs:
       
       - name: Health check
         run: |
-          sleep 20
           ssh -i ~/.ssh/deployment_key \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd /opt/flow && bash scripts/health-check.sh" || {

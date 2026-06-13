@@ -14,10 +14,48 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 print_success() { echo -e "${GREEN}✅ $1${NC}"; }
-print_error() { echo -e "${RED}❌ $1${NC}"; }
-print_info() { echo -e "${YELLOW}ℹ️  $1${NC}"; }
+print_error()   { echo -e "${RED}❌ $1${NC}"; }
+print_info()    { echo -e "${YELLOW}ℹ️  $1${NC}"; }
 
 FAILED=0
+
+# ---------------------------------------------------------------------------
+# wait_for_service <container> <url> <label>
+#   Retries the curl check every 5 s for up to 60 s.
+#   On failure prints the last 30 log lines from the container.
+# ---------------------------------------------------------------------------
+wait_for_service() {
+  local container=$1
+  local url=$2
+  local label=$3
+  local attempts=0
+  local max_attempts=12   # 12 × 5 s = 60 s
+  local code="000"
+
+  print_info "Checking $label..."
+
+  while [ $attempts -lt $max_attempts ]; do
+    code=$(docker exec "$container" curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+    if [ "$code" = "200" ]; then
+      print_success "$label is healthy (HTTP 200)"
+      return 0
+    fi
+    attempts=$((attempts + 1))
+    if [ $attempts -lt $max_attempts ]; then
+      echo "    ↳ HTTP $code — retrying in 5 s (attempt $attempts/$max_attempts)..."
+      sleep 5
+    fi
+  done
+
+  print_error "$label is not responding after 60 s (last HTTP $code)"
+  echo ""
+  echo "--- Last 30 log lines from $container ---"
+  docker logs "$container" --tail 30 2>&1 || echo "(no logs available)"
+  echo "--- End $container logs ---"
+  echo ""
+  FAILED=1
+  return 1
+}
 
 echo "======================================"
 echo "   Flow Services Health Check"
@@ -36,7 +74,7 @@ fi
 
 # Check PostgreSQL
 print_info "Checking PostgreSQL..."
-if docker exec flow-postgres pg_isready -U ${DATABASE_USER:-flow_user} > /dev/null 2>&1; then
+if docker exec flow-postgres pg_isready -U "${DATABASE_USER:-flow_user}" > /dev/null 2>&1; then
     print_success "PostgreSQL is healthy"
 else
     print_error "PostgreSQL is not responding"
@@ -52,65 +90,13 @@ else
     FAILED=1
 fi
 
-# Check Auth Service
-print_info "Checking Auth Service..."
-AUTH_RESPONSE=$(docker exec auth-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/v1/health 2>/dev/null || echo "000")
-if [ "$AUTH_RESPONSE" = "200" ]; then
-    print_success "Auth Service is healthy (HTTP 200)"
-else
-    print_error "Auth Service is not responding (HTTP $AUTH_RESPONSE)"
-    FAILED=1
-fi
-
-# Check Notification Service
-print_info "Checking Notification Service..."
-NOTIF_RESPONSE=$(docker exec notification-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/api/v1/notifications/health 2>/dev/null || echo "000")
-if [ "$NOTIF_RESPONSE" = "200" ]; then
-    print_success "Notification Service is healthy (HTTP 200)"
-else
-    print_error "Notification Service is not responding (HTTP $NOTIF_RESPONSE)"
-    FAILED=1
-fi
-
-# Check Job Service
-print_info "Checking Job Service..."
-JOB_RESPONSE=$(docker exec job-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/api/v1/jobs/health 2>/dev/null || echo "000")
-if [ "$JOB_RESPONSE" = "200" ]; then
-    print_success "Job Service is healthy (HTTP 200)"
-else
-    print_error "Job Service is not responding (HTTP $JOB_RESPONSE)"
-    FAILED=1
-fi
-
-# Check File Service
-print_info "Checking File Service..."
-FILE_RESPONSE=$(docker exec file-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3004/api/v1/files/health 2>/dev/null || echo "000")
-if [ "$FILE_RESPONSE" = "200" ]; then
-    print_success "File Service is healthy (HTTP 200)"
-else
-    print_error "File Service is not responding (HTTP $FILE_RESPONSE)"
-    FAILED=1
-fi
-
-# Check Settings Service
-print_info "Checking Settings Service..."
-SETTINGS_RESPONSE=$(docker exec settings-service curl -s -o /dev/null -w "%{http_code}" http://localhost:3005/api/v1/health 2>/dev/null || echo "000")
-if [ "$SETTINGS_RESPONSE" = "200" ]; then
-    print_success "Settings Service is healthy (HTTP 200)"
-else
-    print_error "Settings Service is not responding (HTTP $SETTINGS_RESPONSE)"
-    FAILED=1
-fi
-
-# Check API Service
-print_info "Checking API Service (projects/tasks)..."
-API_RESPONSE=$(docker exec api curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/v1/health 2>/dev/null || echo "000")
-if [ "$API_RESPONSE" = "200" ]; then
-    print_success "API Service is healthy (HTTP 200)"
-else
-    print_error "API Service is not responding (HTTP $API_RESPONSE)"
-    FAILED=1
-fi
+# Application services
+wait_for_service auth-service         "http://localhost:3001/api/v1/health"            "Auth Service"
+wait_for_service notification-service "http://localhost:3002/api/v1/notifications/health" "Notification Service"
+wait_for_service job-service          "http://localhost:3003/api/v1/jobs/health"       "Job Service"
+wait_for_service file-service         "http://localhost:3004/api/v1/files/health"      "File Service"
+wait_for_service settings-service     "http://localhost:3005/api/v1/health"            "Settings Service"
+wait_for_service api                  "http://localhost:3000/api/v1/health"            "API Service (projects/tasks)"
 
 # Check disk space
 print_info "Checking disk space..."
@@ -122,7 +108,7 @@ else
     FAILED=1
 fi
 
-# Check memory!
+# Check memory
 print_info "Checking memory..."
 MEM_AVAILABLE=$(free -m | awk 'NR==2 {print $7}')
 if [ "$MEM_AVAILABLE" -gt 500 ]; then
