@@ -247,19 +247,7 @@ export class SeedService implements OnModuleInit {
       },
     ];
 
-    for (const f of features) {
-      await this.catalogRepo
-        .createQueryBuilder()
-        .insert()
-        .into(FeatureCatalog)
-        .values(f as FeatureCatalog)
-        .orUpdate(
-          ['name', 'description', 'package', 'source_config', 'minimum_plan', 'pack_id', 'tier', 'is_default'],
-          ['key'],
-        )
-        .execute();
-    }
-
+    await this.catalogRepo.upsert(features as FeatureCatalog[], ['key']);
     this.logger.log(`Upserted ${features.length} feature catalog entries.`);
   }
 
@@ -325,19 +313,7 @@ export class SeedService implements OnModuleInit {
       },
     ];
 
-    for (const p of plans) {
-      await this.billingPlanRepo
-        .createQueryBuilder()
-        .insert()
-        .into(BillingPlan)
-        .values(p as BillingPlan)
-        .orUpdate(
-          ['tagline', 'price_per_seat', 'annual_discount', 'seat_limit', 'allowed_configs', 'highlights', 'sort_order'],
-          ['name'],
-        )
-        .execute();
-    }
-
+    await this.billingPlanRepo.upsert(plans as BillingPlan[], ['name']);
     this.logger.log(`Upserted ${plans.length} billing plans.`);
   }
 
@@ -378,19 +354,7 @@ export class SeedService implements OnModuleInit {
       },
     ];
 
-    for (const p of packs) {
-      await this.featurePackRepo
-        .createQueryBuilder()
-        .insert()
-        .into(FeaturePack)
-        .values(p as FeaturePack)
-        .orUpdate(
-          ['name', 'source_config', 'description', 'features', 'price_per_seat', 'minimum_plan'],
-          ['id'],
-        )
-        .execute();
-    }
-
+    await this.featurePackRepo.upsert(packs as FeaturePack[], ['id']);
     this.logger.log(`Upserted ${packs.length} feature packs.`);
   }
 
@@ -445,16 +409,7 @@ export class SeedService implements OnModuleInit {
       { countryCode: 'AE', currency: 'AED', currencySymbol: 'د.إ', paymentMethods: ['card'] },
     ];
 
-    for (const c of configs) {
-      await this.countryPaymentRepo
-        .createQueryBuilder()
-        .insert()
-        .into(CountryPaymentConfig)
-        .values(c as CountryPaymentConfig)
-        .orUpdate(['currency', 'currency_symbol', 'payment_methods'], ['country_code'])
-        .execute();
-    }
-
+    await this.countryPaymentRepo.upsert(configs as CountryPaymentConfig[], ['countryCode']);
     this.logger.log(`Upserted ${configs.length} country payment configs.`);
   }
 
