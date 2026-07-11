@@ -41,6 +41,7 @@ import { OAuthService } from './services/oauth.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { MicrosoftStrategy } from './strategies/microsoft.strategy';
 import { buildUnconfiguredStrategy } from './strategies/unconfigured.strategy';
+import { AuditLogWriterModule } from '@app/common';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { buildUnconfiguredStrategy } from './strategies/unconfigured.strategy';
         },
       }),
     }),
+    AuditLogWriterModule,
   ],
   controllers: [
     AuthController,

@@ -34,6 +34,13 @@ import { RefreshToken } from '../entities/refresh-token.entity';
 import { OrganizationWorkspace } from '../entities/organization-workspace.entity';
 import { SessionService } from './session.service';
 import axios from 'axios';
+import {
+  AuditLogWriterService,
+  AuditAction,
+  AuditResourceType,
+  AuditStatus,
+  AuditSeverity,
+} from '@app/common';
 
 @Injectable()
 export class AuthService {
@@ -59,6 +66,7 @@ export class AuthService {
     private rolesService: RolesService,
     private authGateway: AuthGateway,
     private sessionService: SessionService,
+    private auditLogWriter: AuditLogWriterService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
@@ -271,6 +279,23 @@ export class AuthService {
     });
 
     const authResponse = await this.generateAuthResponse(userToLogin, userToLogin.organization);
+
+    await this.auditLogWriter.log({
+      organizationId: userToLogin.organizationId,
+      userId: userToLogin.id,
+      actorId: userToLogin.id,
+      actorName: `${userToLogin.firstName ?? ''} ${userToLogin.lastName ?? ''}`.trim() || undefined,
+      actorEmail: userToLogin.email,
+      action: AuditAction.LOGIN,
+      resourceType: AuditResourceType.USER,
+      resourceId: userToLogin.id,
+      resourceName: userToLogin.email,
+      status: AuditStatus.SUCCESS,
+      severity: AuditSeverity.LOW,
+      description: `${userToLogin.email} signed in`,
+      ipAddress,
+      userAgent,
+    });
 
     return {
       sessionId,

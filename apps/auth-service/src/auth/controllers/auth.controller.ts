@@ -11,11 +11,21 @@ import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import {
+  AuditLogWriterService,
+  AuditAction,
+  AuditResourceType,
+  AuditStatus,
+  AuditSeverity,
+} from '@app/common';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private auditLogWriter: AuditLogWriterService,
+  ) {}
 
   @Throttle({
     default: {
@@ -137,7 +147,28 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout user' })
-  async logout() {
+  async logout(@Req() req: Request) {
+    const user = req.user as any;
+
+    if (user) {
+      await this.auditLogWriter.log({
+        organizationId: user.organizationId,
+        userId: user.id,
+        actorId: user.id,
+        actorName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined,
+        actorEmail: user.email,
+        action: AuditAction.LOGOUT,
+        resourceType: AuditResourceType.USER,
+        resourceId: user.id,
+        resourceName: user.email,
+        status: AuditStatus.SUCCESS,
+        severity: AuditSeverity.LOW,
+        description: `${user.email} signed out`,
+        ipAddress: req.ip || (req.headers['x-forwarded-for'] as string) || undefined,
+        userAgent: req.headers['user-agent'],
+      });
+    }
+
     // Client side just drops token, server could invalidate refresh token
     return { message: 'Logged out successfully' };
   }

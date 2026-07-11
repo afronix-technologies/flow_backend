@@ -7,6 +7,20 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import {
+  AuditAction,
+  AuditResourceType,
+  AuditStatus,
+  AuditSeverity,
+} from '../audit-logs/entities/audit-log.entity';
+
+export interface AuditActor {
+  userId: string;
+  email?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
 
 @Injectable()
 export class ProjectsService {
@@ -16,6 +30,8 @@ export class ProjectsService {
 
     @InjectRepository(ProjectTask)
     private readonly taskRepo: Repository<ProjectTask>,
+
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -37,7 +53,11 @@ export class ProjectsService {
     return project;
   }
 
-  async createProject(organizationId: string, dto: CreateProjectDto): Promise<Project> {
+  async createProject(
+    organizationId: string,
+    dto: CreateProjectDto,
+    actor?: AuditActor,
+  ): Promise<Project> {
     const existing = await this.projectRepo.findOne({
       where: { organizationId, projectCode: dto.projectCode },
     });
@@ -50,13 +70,34 @@ export class ProjectsService {
       organizationId,
       lastActivityAt: new Date(),
     });
-    return this.projectRepo.save(project);
+    const saved = await this.projectRepo.save(project);
+
+    if (actor) {
+      await this.auditLogsService.log({
+        organizationId,
+        userId: actor.userId,
+        actorId: actor.userId,
+        actorEmail: actor.email,
+        action: AuditAction.CREATE,
+        resourceType: AuditResourceType.PROJECT,
+        resourceId: saved.id,
+        resourceName: saved.name,
+        status: AuditStatus.SUCCESS,
+        severity: AuditSeverity.LOW,
+        description: `Created project "${saved.name}" (${saved.projectCode})`,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      });
+    }
+
+    return saved;
   }
 
   async updateProject(
     organizationId: string,
     projectId: string,
     dto: UpdateProjectDto,
+    actor?: AuditActor,
   ): Promise<Project> {
     const project = await this.findOneProject(organizationId, projectId);
 
@@ -67,13 +108,60 @@ export class ProjectsService {
       if (conflict) throw new ConflictException(`Project code '${dto.projectCode}' already exists`);
     }
 
+    const before = { ...project };
     Object.assign(project, dto, { lastActivityAt: new Date() });
-    return this.projectRepo.save(project);
+    const saved = await this.projectRepo.save(project);
+
+    if (actor) {
+      const changes = Object.keys(dto).reduce((acc, key) => {
+        const oldValue = (before as any)[key];
+        const newValue = (saved as any)[key];
+        if (oldValue !== newValue) acc[key] = { from: oldValue, to: newValue };
+        return acc;
+      }, {} as Record<string, any>);
+
+      await this.auditLogsService.log({
+        organizationId,
+        userId: actor.userId,
+        actorId: actor.userId,
+        actorEmail: actor.email,
+        action: AuditAction.UPDATE,
+        resourceType: AuditResourceType.PROJECT,
+        resourceId: saved.id,
+        resourceName: saved.name,
+        status: AuditStatus.SUCCESS,
+        severity: AuditSeverity.LOW,
+        description: `Updated project "${saved.name}" (${saved.projectCode})`,
+        changes,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      });
+    }
+
+    return saved;
   }
 
-  async deleteProject(organizationId: string, projectId: string): Promise<void> {
+  async deleteProject(organizationId: string, projectId: string, actor?: AuditActor): Promise<void> {
     const project = await this.findOneProject(organizationId, projectId);
     await this.projectRepo.remove(project);
+
+    if (actor) {
+      await this.auditLogsService.log({
+        organizationId,
+        userId: actor.userId,
+        actorId: actor.userId,
+        actorEmail: actor.email,
+        action: AuditAction.DELETE,
+        resourceType: AuditResourceType.PROJECT,
+        resourceId: projectId,
+        resourceName: project.name,
+        status: AuditStatus.SUCCESS,
+        severity: AuditSeverity.MEDIUM,
+        description: `Deleted project "${project.name}" (${project.projectCode})`,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -100,11 +188,31 @@ export class ProjectsService {
     organizationId: string,
     projectId: string,
     dto: CreateTaskDto,
+    actor?: AuditActor,
   ): Promise<ProjectTask> {
     await this.findOneProject(organizationId, projectId);
     const task = this.taskRepo.create({ ...dto, projectId });
     const saved = await this.taskRepo.save(task);
     await this.projectRepo.update({ id: projectId }, { lastActivityAt: new Date() });
+
+    if (actor) {
+      await this.auditLogsService.log({
+        organizationId,
+        userId: actor.userId,
+        actorId: actor.userId,
+        actorEmail: actor.email,
+        action: AuditAction.CREATE,
+        resourceType: AuditResourceType.TASK,
+        resourceId: saved.id,
+        resourceName: (saved as any).title ?? (saved as any).name ?? saved.id,
+        status: AuditStatus.SUCCESS,
+        severity: AuditSeverity.LOW,
+        description: `Created task in project ${projectId}`,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      });
+    }
+
     return saved;
   }
 
@@ -113,17 +221,61 @@ export class ProjectsService {
     projectId: string,
     taskId: string,
     dto: UpdateTaskDto,
+    actor?: AuditActor,
   ): Promise<ProjectTask> {
     const task = await this.findOneTask(organizationId, projectId, taskId);
     Object.assign(task, dto);
     const saved = await this.taskRepo.save(task);
     await this.projectRepo.update({ id: projectId }, { lastActivityAt: new Date() });
+
+    if (actor) {
+      await this.auditLogsService.log({
+        organizationId,
+        userId: actor.userId,
+        actorId: actor.userId,
+        actorEmail: actor.email,
+        action: AuditAction.UPDATE,
+        resourceType: AuditResourceType.TASK,
+        resourceId: saved.id,
+        resourceName: (saved as any).title ?? (saved as any).name ?? saved.id,
+        status: AuditStatus.SUCCESS,
+        severity: AuditSeverity.LOW,
+        description: `Updated task ${taskId} in project ${projectId}`,
+        changes: dto as Record<string, any>,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      });
+    }
+
     return saved;
   }
 
-  async deleteTask(organizationId: string, projectId: string, taskId: string): Promise<void> {
+  async deleteTask(
+    organizationId: string,
+    projectId: string,
+    taskId: string,
+    actor?: AuditActor,
+  ): Promise<void> {
     const task = await this.findOneTask(organizationId, projectId, taskId);
     await this.taskRepo.remove(task);
+
+    if (actor) {
+      await this.auditLogsService.log({
+        organizationId,
+        userId: actor.userId,
+        actorId: actor.userId,
+        actorEmail: actor.email,
+        action: AuditAction.DELETE,
+        resourceType: AuditResourceType.TASK,
+        resourceId: taskId,
+        resourceName: (task as any).title ?? (task as any).name ?? taskId,
+        status: AuditStatus.SUCCESS,
+        severity: AuditSeverity.LOW,
+        description: `Deleted task ${taskId} in project ${projectId}`,
+        ipAddress: actor.ipAddress,
+        userAgent: actor.userAgent,
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@ import { ProjectsService } from './projects.service';
 import { ProjectsController } from './projects.controller';
 import { ProjectsInternalController } from './projects-internal.controller';
 import { JwtStrategy } from '../../core/strategies/jwt.strategy';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { JwtStrategy } from '../../core/strategies/jwt.strategy';
         signOptions: { expiresIn: configService.get<string>('JWT_EXPIRATION', '7d') },
       }),
     }),
+    AuditLogsModule,
   ],
   controllers: [ProjectsController, ProjectsInternalController],
   providers: [ProjectsService, JwtStrategy],

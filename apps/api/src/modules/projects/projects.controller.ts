@@ -7,10 +7,12 @@ import {
   Body,
   Param,
   Query,
+  Req,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -37,7 +39,18 @@ import { ProjectTask } from './entities/project-task.entity';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
 import { CurrentOrg } from '../../core/decorators/current-org.decorator';
+import { CurrentUser } from '../../core/decorators/current-user.decorator';
 import { Roles } from '../../core/decorators/roles.decorator';
+import { AuditActor } from './projects.service';
+
+function actorFrom(user: any, req: Request): AuditActor {
+  return {
+    userId: user?.userId,
+    email: user?.email,
+    ipAddress: req.ip || (req.headers['x-forwarded-for'] as string) || undefined,
+    userAgent: req.headers['user-agent'],
+  };
+}
 
 @ApiTags('Projects')
 @ApiBearerAuth()
@@ -93,8 +106,13 @@ export class ProjectsController {
   @ApiCreatedResponse({ type: Project })
   @ApiBadRequestResponse({ description: 'Validation failed' })
   @ApiConflictResponse({ description: 'Project code already exists in this organization' })
-  create(@CurrentOrg() orgId: string, @Body() dto: CreateProjectDto) {
-    return this.projectsService.createProject(orgId, dto);
+  create(
+    @CurrentOrg() orgId: string,
+    @Body() dto: CreateProjectDto,
+    @CurrentUser() user: any,
+    @Req() req: Request,
+  ) {
+    return this.projectsService.createProject(orgId, dto, actorFrom(user, req));
   }
 
   @Get(':projectId')
@@ -124,8 +142,10 @@ export class ProjectsController {
     @CurrentOrg() orgId: string,
     @Param('projectId') projectId: string,
     @Body() dto: UpdateProjectDto,
+    @CurrentUser() user: any,
+    @Req() req: Request,
   ) {
-    return this.projectsService.updateProject(orgId, projectId, dto);
+    return this.projectsService.updateProject(orgId, projectId, dto, actorFrom(user, req));
   }
 
   @Delete(':projectId')
@@ -140,8 +160,13 @@ export class ProjectsController {
   @ApiNoContentResponse({ description: 'Project deleted' })
   @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({ description: 'Admin or owner role required' })
-  remove(@CurrentOrg() orgId: string, @Param('projectId') projectId: string) {
-    return this.projectsService.deleteProject(orgId, projectId);
+  remove(
+    @CurrentOrg() orgId: string,
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: any,
+    @Req() req: Request,
+  ) {
+    return this.projectsService.deleteProject(orgId, projectId, actorFrom(user, req));
   }
 
   // ---------------------------------------------------------------------------
@@ -169,8 +194,10 @@ export class ProjectsController {
     @CurrentOrg() orgId: string,
     @Param('projectId') projectId: string,
     @Body() dto: CreateTaskDto,
+    @CurrentUser() user: any,
+    @Req() req: Request,
   ) {
-    return this.projectsService.createTask(orgId, projectId, dto);
+    return this.projectsService.createTask(orgId, projectId, dto, actorFrom(user, req));
   }
 
   @Get(':projectId/tasks/:taskId')
@@ -203,8 +230,10 @@ export class ProjectsController {
     @Param('projectId') projectId: string,
     @Param('taskId') taskId: string,
     @Body() dto: UpdateTaskDto,
+    @CurrentUser() user: any,
+    @Req() req: Request,
   ) {
-    return this.projectsService.updateTask(orgId, projectId, taskId, dto);
+    return this.projectsService.updateTask(orgId, projectId, taskId, dto, actorFrom(user, req));
   }
 
   @Delete(':projectId/tasks/:taskId')
@@ -219,7 +248,9 @@ export class ProjectsController {
     @CurrentOrg() orgId: string,
     @Param('projectId') projectId: string,
     @Param('taskId') taskId: string,
+    @CurrentUser() user: any,
+    @Req() req: Request,
   ) {
-    return this.projectsService.deleteTask(orgId, projectId, taskId);
+    return this.projectsService.deleteTask(orgId, projectId, taskId, actorFrom(user, req));
   }
 }

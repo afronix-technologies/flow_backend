@@ -14,9 +14,13 @@ import { ContactSettingsController } from './controllers/contact-settings.contro
 import { RegionalSettingsController } from './controllers/regional-settings.controller';
 
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuditLogWriterModule } from '@app/common';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([GeneralSettings, ContactSettings, RegionalSettings])],
+  imports: [
+    TypeOrmModule.forFeature([GeneralSettings, ContactSettings, RegionalSettings]),
+    AuditLogWriterModule,
+  ],
   controllers: [GeneralSettingsController, ContactSettingsController, RegionalSettingsController],
   providers: [
     GeneralSettingsService,
